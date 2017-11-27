@@ -9,21 +9,14 @@ import React, {
   PropTypes
 } from 'react';
 import { bindActionCreators } from 'redux';
-import { connect, Provider } from 'react-redux';
+import { connect } from 'react-redux';
 import { panCamera } from '../actions/';
 import Main from '../components/App';
-let reduxStore = require('../stores/index');
-// import reduxStore from '../stores/index';
-
 /* Populated by react-webpack-redux:reducer */
 class App extends Component {
   render() {
     const {actions, camera} = this.props;
-    return (
-    <Provider store={reduxStore}>
-      <Main actions={actions} camera={camera}/>
-    </Provider>
-    );
+    return <Main actions={actions} camera={camera}/>;
   }
 }
 /* Populated by react-webpack-redux:reducer
