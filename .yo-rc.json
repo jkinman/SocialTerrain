@@ -1,0 +1,9 @@
+{
+  "generator-react-webpack": {
+    "appName": "social-terrain",
+    "style": "scss",
+    "cssmodules": false,
+    "postcss": false,
+    "generatedWithVersion": 4
+  }
+}
