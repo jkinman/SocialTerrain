@@ -12,8 +12,21 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import { panCamera } from '../actions/';
 import Main from '../components/App';
+import {subscribeToTwitter} from '../sources/stream';
+
 /* Populated by react-webpack-redux:reducer */
 class App extends Component {
+  
+  constructor(props, context){
+    super(props, context);
+    subscribeToTwitter((tweet) => {
+      console.log(tweet);
+    });
+    // subscribeToTwitter((err, timestamp) => this.setState({ 
+    //   tweets: {...this.get}
+    // }));
+  }
+
   render() {
     const {actions, camera} = this.props;
     return <Main actions={actions} camera={camera}/>;
