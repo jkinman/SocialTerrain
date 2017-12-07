@@ -3,9 +3,9 @@
  * If you change the type from object to something else, do not forget to update
  * src/container/App.js accordingly.
  */
-import {} from '../actions/const';
+import {NEW_TWEET} from '../actions/const';
 
-const initialState = {};
+const initialState = {tweets:[]};
 
 function reducer(state = initialState, action) {
   /* Keep the reducer clean - do not mutate the original state. */
@@ -18,6 +18,12 @@ function reducer(state = initialState, action) {
       return nextState;
     }
     */
+    case NEW_TWEET: {
+      return {
+        ...state,
+        tweets: [...state.tweets, action.tweet]
+      };
+    }
     default: {
       /* Return original state if no actions were consumed. */
       return state;

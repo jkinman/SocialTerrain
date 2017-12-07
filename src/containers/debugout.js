@@ -5,40 +5,45 @@ import React, {
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import {newTweet} from '../actions/';
-import subscribeToTwitter from '../sources/stream';
+import openSocket from 'socket.io-client';
 
-class debugout extends Component {
-  constructor(p,c){
+const socket = openSocket('http://localhost:3000');
+
+class Debugout extends Component {
+
+  constructor(p,c) {
     super(p,c);
-    subscribeToTwitter(
-      (tweet) => {
-        dispatch(newTweet(tweet));
-      }
-    )
+
+    const {tweets} = this.props;
+    const {newTweet} = this.props.actions;
+    socket.on('twitter', (tweet) => {
+      newTweet(JSON.parse(tweet));
+    });
   }
 
   render() {
-    const { actions } = this.props;
     return (
-    <div actions={actions}>
-    
+    <div >
+
     </div>);
   }
 }
 
-debugout.propTypes = {
+Debugout.propTypes = {
   actions: PropTypes.shape({})
 };
 
 function mapStateToProps(state) {
-  const props = {};
+  const props = {
+    tweets: state.social.tweets
+  };
   return props;
 }
 
 function mapDispatchToProps(dispatch) {
-  const actions = {};
+  const actions = {newTweet};
   const actionMap = { actions: bindActionCreators(actions, dispatch) };
   return actionMap;
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(debugout);
+export default connect(mapStateToProps, mapDispatchToProps)(Debugout);
