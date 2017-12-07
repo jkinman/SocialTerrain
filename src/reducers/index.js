@@ -9,7 +9,11 @@
  */
 /* Populated by react-webpack-redux:reducer */
 import { combineReducers } from 'redux';
+import social from '../reducers/social.js';
 import camera from '../reducers/camera.js';
-const reducers = { camera };
+const reducers = {
+  camera,
+  social
+};
 const combined = combineReducers(reducers);
 module.exports = combined;

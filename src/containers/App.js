@@ -10,26 +10,16 @@ import React, {
 } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import { panCamera } from '../actions/';
+import {
+  panCamera,
+  newTweet
+} from '../actions/';
 import Main from '../components/App';
-import {subscribeToTwitter} from '../sources/stream';
-
 /* Populated by react-webpack-redux:reducer */
 class App extends Component {
-  
-  constructor(props, context){
-    super(props, context);
-    subscribeToTwitter((tweet) => {
-      console.log(tweet);
-    });
-    // subscribeToTwitter((err, timestamp) => this.setState({ 
-    //   tweets: {...this.get}
-    // }));
-  }
-
   render() {
-    const {actions, camera} = this.props;
-    return <Main actions={actions} camera={camera}/>;
+    const {actions, camera, social} = this.props;
+    return <Main actions={actions} camera={camera} social={social}/>;
   }
 }
 /* Populated by react-webpack-redux:reducer
@@ -38,18 +28,28 @@ class App extends Component {
  *       adjust it here.
  */
 App.propTypes = {
-  actions: PropTypes.shape({ panCamera: PropTypes.func.isRequired }),
-  camera: PropTypes.shape({})
+  actions: PropTypes.shape({
+    panCamera: PropTypes.func.isRequired,
+    newTweet: PropTypes.func.isRequired
+  }),
+  camera: PropTypes.shape({}),
+  social: PropTypes.shape({})
 };
 function mapStateToProps(state) {
   // eslint-disable-line no-unused-vars
   /* Populated by react-webpack-redux:reducer */
-  const props = { camera: state.camera };
+  const props = {
+    camera: state.camera,
+    social: state.social
+  };
   return props;
 }
 function mapDispatchToProps(dispatch) {
   /* Populated by react-webpack-redux:action */
-  const actions = { panCamera };
+  const actions = {
+    panCamera,
+    newTweet
+  };
   const actionMap = { actions: bindActionCreators(actions, dispatch) };
   return actionMap;
 }
