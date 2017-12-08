@@ -97,26 +97,25 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.ambientLight = new THREE.AmbientLight( new THREE.Color('rgb(255, 255, 255)'), 0.1 );
     this.scene.add( this.ambientLight );
     
-    // this.scene.fog = new THREE.Fog( 0x000, 0, 10);
-     // ;(function(){
+    this.scene.fog = new THREE.Fog( 0x000, 0, 10);
       var light	= new THREE.AmbientLight( 0x202020 )
-      this.scene.add( light )
+      // this.scene.add( light )
       var light	= new THREE.DirectionalLight('white', 5)
       light.position.set(0.5, 0.0, 2)
       this.scene.add( light )
       var light	= new THREE.DirectionalLight('white', 0.75*2)
       light.position.set(-0.5, -0.5, -2)
-      this.scene.add( light )		
-    // })()
+      this.scene.add( light )
 
-    var heightMap	= THREEx.Terrain.allocateHeightMap(256,256)
+    var heightMap	= THREEx.Terrain.allocateHeightMap(512,512)
     THREEx.Terrain.simplexHeightMap(heightMap)	
     var geometry	= THREEx.Terrain.heightMapToPlaneGeometry(heightMap)
     THREEx.Terrain.heightMapToVertexColor(heightMap, geometry)
 
   /* Wireframe built-in color is white, no need to change that */
     var material	= new THREE.MeshBasicMaterial({
-      wireframe: true
+      wireframe: this.props.meshTerrain,
+      color: this.props.terrainColour
     });
     var mesh	= new THREE.Mesh( geometry, material );
     this.scene.add( mesh );
@@ -124,15 +123,15 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
 
     mesh.scale.y	= 3.5;
     mesh.scale.x	= 3;
-    mesh.scale.z	= 0.20;
+    mesh.scale.z	= 0.1;
     mesh.scale.multiplyScalar(10);
 
-    onRenderFcts.push(function(delta, now){
-      mesh.rotation.z += 0.2 * delta;	
-    })
-    onRenderFcts.push(function(){
-      this.renderer.render( this.scene, this.camera );		
-    })
+    // onRenderFcts.push(function(delta, now){
+    //   mesh.rotation.z += 0.2 * delta;	
+    // })
+    // onRenderFcts.push(function(){
+    //   this.renderer.render( this.scene, this.camera );		
+    // })
     var lastTimeMsec= null
   
     this.cameraPivot = new THREE.Object3D();

@@ -12,7 +12,7 @@ class Scene extends React.Component {
   render() {
     return (
       <div className="">
-        <Landscape ref="3dScene" />
+        <Landscape ref="3dScene"  terrainColour={"#33ff33"} meshTerrain={true}/>
       </div>
     );
   }
