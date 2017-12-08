@@ -6,8 +6,9 @@ import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import {newTweet} from '../actions/';
 import openSocket from 'socket.io-client';
+import config from 'config';
 
-const socket = openSocket('http://localhost:3000');
+const socket = openSocket(config.serverUrl);
 
 class Debugout extends Component {
 
