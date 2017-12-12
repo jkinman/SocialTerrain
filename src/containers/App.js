@@ -12,7 +12,8 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import {
   panCamera,
-  newTweet
+  newTweet,
+  setOrientation
 } from '../actions/';
 import Main from '../components/App';
 /* Populated by react-webpack-redux:reducer */
@@ -30,7 +31,8 @@ class App extends Component {
 App.propTypes = {
   actions: PropTypes.shape({
     panCamera: PropTypes.func.isRequired,
-    newTweet: PropTypes.func.isRequired
+    newTweet: PropTypes.func.isRequired,
+    setOrientation: PropTypes.func.isRequired
   }),
   camera: PropTypes.shape({}),
   social: PropTypes.shape({})
@@ -48,7 +50,8 @@ function mapDispatchToProps(dispatch) {
   /* Populated by react-webpack-redux:action */
   const actions = {
     panCamera,
-    newTweet
+    newTweet,
+    setOrientation
   };
   const actionMap = { actions: bindActionCreators(actions, dispatch) };
   return actionMap;

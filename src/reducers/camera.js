@@ -3,9 +3,9 @@
  * If you change the type from object to something else, do not forget to update
  * src/container/App.js accordingly.
  */
-import {PAN_CAMERA} from '../actions/const';
+import {PAN_CAMERA, SET_ORIENTATION} from '../actions/const';
 
-const initialState = {};
+const initialState = {orientation: [0,0,0]};
 
 function reducer(state = initialState, action) {
   /* Keep the reducer clean - do not mutate the original state. */
@@ -18,6 +18,9 @@ function reducer(state = initialState, action) {
       return nextState;
     }
     */
+    case SET_ORIENTATION: {
+      return {...state, orientation: action.orientation};
+    }
     case PAN_CAMERA: {
       return state;
     }

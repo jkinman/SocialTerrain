@@ -7,4 +7,10 @@ function subscribeToTwitter(cb) {
   });
 }
 
-export { subscribeToTwitter };
+function subscribeToDeviceOrientation(cb) {
+  socket.on('orientation', (orientation) => {
+    cb(orientation);
+  });
+}
+
+export { subscribeToTwitter, subscribeToDeviceOrientation };

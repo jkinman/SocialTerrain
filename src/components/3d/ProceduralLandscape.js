@@ -25,6 +25,19 @@ import SimplexNoise from "imports-loader?THREE=three!../../externals/threex/Simp
 import * as THREEx from "imports-loader?THREE=three!../../externals/threex/threex.terrain.js";
 
 
+import config from 'config';
+import openSocket from 'socket.io-client';
+let deviceOrientation;
+const socket = openSocket(config.serverUrl);
+socket.on('orientation', (orientation) => {
+  deviceOrientation = orientation;
+});
+
+const zee = new THREE.Vector3( 0, 0, 1 );
+const euler = new THREE.Euler();
+const q0 = new THREE.Quaternion();
+const q1 = new THREE.Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) ); // - PI/2 around the x-axis
+
 const CAMERA_ANIMATION_DELAY = 3000;
 const CAMERA_ROTATE_TIME = 3000;
 const TEXTURE_SIZE = 512;
@@ -51,31 +64,58 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     document.getElementById( 'proceduralLandscape-component' ).appendChild( this.renderer.domElement );
     this.buildScene();
 
-
     var geometry = new THREE.TorusGeometry( 6, 3, 16, 10 );
     var material = new THREE.MeshBasicMaterial( { color: 0xffff00, side: THREE.DoubleSide } );
-    var torus = new THREE.Mesh( geometry, material );
-    this.scene.add( torus );
+    // this.torus = new THREE.Mesh( geometry, material );
+    // this.scene.add( this.torus );
 
-    this.controls = new THREE.FlyControls( this.cameraPivot );
-    // this.controls = new THREE.FlyControls( torus );
-    this.controls.movementSpeed = 0.3;
-    this.controls.domElement = document.getElementById( 'proceduralLandscape-component' );
-    this.controls.rollSpeed = Math.PI / 24;
-    this.controls.autoForward = true;
-    this.controls.dragToLook = true;
+    // this.controls = new THREE.FlyControls( this.cameraPivot );
+    // // this.controls = new THREE.FlyControls( torus );
+    // this.controls.movementSpeed = 0.3;
+    // this.controls.domElement = document.getElementById( 'proceduralLandscape-component' );
+    // this.controls.rollSpeed = Math.PI / 24;
+    // this.controls.autoForward = true;
+    // this.controls.dragToLook = true;
 
     this.mounted = true;
   }
 
   renderLoop( time ) {
+    super.renderLoop( time );
     if( !this.mounted ) return;
     let delta = this.clock.getDelta();
-    super.renderLoop( time );
+
+    console.log( this.props.orientation )
     TWEEN.update();
-    this.controls.update( delta );
+    // this.controls.update( delta );
     // this.cameraPivot.position.z -= 0.01
+    if( !deviceOrientation ) return;
+    this.cameraRotate( deviceOrientation );
   }
+
+  cameraRotate( obj ) {
+    
+        this.alphaOffset = 0;
+        var alpha = obj.alpha ? THREE.Math.degToRad( obj.alpha ) + this.alphaOffset : 0; // Z
+        var beta = obj.beta ? THREE.Math.degToRad( obj.beta ) : 0; // X'
+        var gamma = obj.gamma ? THREE.Math.degToRad( obj.gamma ) : 0; // Y''
+
+        // var orient = scope.screenOrientation ? THREE.Math.degToRad( scope.screenOrientation ) : 0; // O
+      var orient = 0;
+
+        this.setObjectQuaternion( this.camera.quaternion, alpha, beta, gamma, orient );
+    
+  }
+
+setObjectQuaternion( quaternion, alpha, beta, gamma, orient ) {
+          orient = 0;
+          euler.set( beta, alpha, - gamma, 'YXZ' ); // 'ZXY' for the device, but 'YXZ' for us
+          quaternion.setFromEuler( euler ); // orient the device
+          quaternion.multiply( q1 ); // camera looks out the back of the device, not the top
+          quaternion.multiply( q0.setFromAxisAngle( zee, - orient ) ); // adjust for screen orientation
+    
+        }
+    
 
   buildScene(){
 
@@ -84,6 +124,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.camera.position.x = 20;
     this.camera.position.y = 20;
     this.camera.position.z = 20;
+    this.camera.rotation.reorder( "YXZ" );
     if( this.datgui ){
       this.datgui.add( this.camera.position, 'x', -200, 200 );
       this.datgui.add( this.camera.position, 'y', -200, 200 );
@@ -97,7 +138,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.ambientLight = new THREE.AmbientLight( new THREE.Color('rgb(255, 255, 255)'), 0.1 );
     this.scene.add( this.ambientLight );
     
-    this.scene.fog = new THREE.Fog( 0x000, 0, 10);
+    // this.scene.fog = new THREE.Fog( 0x000, 0, 10);
       var light	= new THREE.AmbientLight( 0x202020 )
       // this.scene.add( light )
       var light	= new THREE.DirectionalLight('white', 5)
@@ -124,7 +165,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     mesh.scale.y	= 3.5;
     mesh.scale.x	= 3;
     mesh.scale.z	= 0.1;
-    mesh.scale.multiplyScalar(10);
+    mesh.scale.multiplyScalar(100);
 
     // onRenderFcts.push(function(delta, now){
     //   mesh.rotation.z += 0.2 * delta;	
