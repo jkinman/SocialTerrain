@@ -27,12 +27,20 @@ import * as THREEx from "imports-loader?THREE=three!../../externals/threex/three
 
 import config from 'config';
 import openSocket from 'socket.io-client';
+
 let deviceOrientation;
+let screenOrientation = 0;
+
 const socket = openSocket(config.serverUrl);
 socket.on('orientation', (orientation) => {
   deviceOrientation = orientation;
 });
 
+socket.on('screenrotation', (orientation) => {
+  screenOrientation = orientation.direction;
+});
+
+// rotation consts
 const zee = new THREE.Vector3( 0, 0, 1 );
 const euler = new THREE.Euler();
 const q0 = new THREE.Quaternion();
@@ -84,31 +92,32 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     super.renderLoop( time );
     if( !this.mounted ) return;
     let delta = this.clock.getDelta();
-
-    console.log( this.props.orientation )
     TWEEN.update();
+    
+    // creep the camera gimble along
+    // this.cameraPivot.position.z -= 0.02;
+
+    // console.log( this.props.orientation )
     // this.controls.update( delta );
-    // this.cameraPivot.position.z -= 0.01
+
     if( !deviceOrientation ) return;
     this.cameraRotate( deviceOrientation );
   }
 
-  cameraRotate( obj ) {
+  cameraRotate(obj) {
     
         this.alphaOffset = 0;
         var alpha = obj.alpha ? THREE.Math.degToRad( obj.alpha ) + this.alphaOffset : 0; // Z
         var beta = obj.beta ? THREE.Math.degToRad( obj.beta ) : 0; // X'
         var gamma = obj.gamma ? THREE.Math.degToRad( obj.gamma ) : 0; // Y''
 
-        // var orient = scope.screenOrientation ? THREE.Math.degToRad( scope.screenOrientation ) : 0; // O
-      var orient = 0;
-
+        var orient = screenOrientation ? THREE.Math.degToRad( screenOrientation ) : 0; // O
         this.setObjectQuaternion( this.camera.quaternion, alpha, beta, gamma, orient );
     
   }
 
 setObjectQuaternion( quaternion, alpha, beta, gamma, orient ) {
-          orient = 0;
+
           euler.set( beta, alpha, - gamma, 'YXZ' ); // 'ZXY' for the device, but 'YXZ' for us
           quaternion.setFromEuler( euler ); // orient the device
           quaternion.multiply( q1 ); // camera looks out the back of the device, not the top
@@ -120,7 +129,7 @@ setObjectQuaternion( quaternion, alpha, beta, gamma, orient ) {
   buildScene(){
 
     super.buildScene();
-    
+
     this.camera.position.x = 20;
     this.camera.position.y = 20;
     this.camera.position.z = 20;
@@ -177,6 +186,7 @@ setObjectQuaternion( quaternion, alpha, beta, gamma, orient ) {
   
     this.cameraPivot = new THREE.Object3D();
     this.cameraPivot.add( this.camera )
+    this.cameraPivot.position.set( 0,0,0 );
     this.scene.add( this.cameraPivot )
 
     this.camera.position.set( 0, 0, 0 );
