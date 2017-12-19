@@ -1,5 +1,11 @@
 import { createStore } from 'redux';
 import reducers from '../reducers';
+// import { composeWithDevTools } from 'redux-devtools-extension';
+
+// const store = createStore(reducer, composeWithDevTools(
+//   applyMiddleware(...middleware),
+//   // other store enhancers if any
+// ));
 
 function reduxStore(initialState) {
   const store = createStore(reducers, initialState,

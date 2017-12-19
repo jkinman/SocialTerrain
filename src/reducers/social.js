@@ -12,16 +12,11 @@ function reducer(state = initialState, action) {
   // const nextState = Object.assign({}, state);
 
   switch (action.type) {
-    /*
-    case YOUR_ACTION: {
-      // Modify next state depending on the action and return it
-      return nextState;
-    }
-    */
     case NEW_TWEET: {
+      console.log(action)
       return {
         ...state,
-        tweets: [...state.tweets, action.tweet]
+        tweets: [...state.tweets, action.payload]
       };
     }
     default: {

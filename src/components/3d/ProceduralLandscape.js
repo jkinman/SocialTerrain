@@ -5,6 +5,10 @@ import React from "react";
 // import TCL from 'three-collada-loader';
 import BaseSceneComponent from "./BaseSceneComponent";
 import "./ProceduralLandscape.scss";
+import SimplexNoise from "imports-loader?THREE=three!../../externals/threex/SimplexNoise.js";
+import * as THREEx from "imports-loader?THREE=three!../../externals/threex/threex.terrain.js";
+import config from "config";
+import openSocket from "socket.io-client";
 
 let TWEEN = require("tween.js");
 
@@ -18,12 +22,6 @@ require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/RGBShiftShader.js");
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/SSAOShader.js");
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/controls/FlyControls.js");
-
-import SimplexNoise from "imports-loader?THREE=three!../../externals/threex/SimplexNoise.js";
-import * as THREEx from "imports-loader?THREE=three!../../externals/threex/threex.terrain.js";
-
-import config from "config";
-import openSocket from "socket.io-client";
 
 let deviceOrientation;
 let screenOrientation = 0;
@@ -96,10 +94,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     TWEEN.update();
 
     // creep the camera gimble along
-    // this.cameraPivot.position.z -= 0.02;
-
-    // console.log( this.props.orientation )
-    // this.controls.update( delta );
+    this.cameraPivot.position.z -= 0.01;
 
     if (!deviceOrientation) return;
     this.cameraRotate(deviceOrientation);

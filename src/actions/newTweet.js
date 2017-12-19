@@ -1,7 +1,7 @@
 import { NEW_TWEET } from './const';
 
-function action(tweet) {
-  return { type: NEW_TWEET, tweet };
+function newTweet(tweet) {
+  return { type: NEW_TWEET, payload: tweet };
 }
 
-module.exports = action;
+module.exports = newTweet;

@@ -15,12 +15,12 @@ import {
   newTweet,
   setOrientation
 } from '../actions/';
-import Main from '../components/App';
+import Main from './sceneContainer';
 /* Populated by react-webpack-redux:reducer */
 class App extends Component {
   render() {
-    const {actions, camera, social} = this.props;
-    return <Main actions={actions} camera={camera} social={social}/>;
+    const {actions, camera, newTweet} = this.props;
+    return <Main actions={actions} camera={camera} />;
   }
 }
 /* Populated by react-webpack-redux:reducer
@@ -37,12 +37,12 @@ App.propTypes = {
   camera: PropTypes.shape({}),
   social: PropTypes.shape({})
 };
+
 function mapStateToProps(state) {
   // eslint-disable-line no-unused-vars
   /* Populated by react-webpack-redux:reducer */
   const props = {
-    camera: state.camera,
-    social: state.social
+    camera: state.camera
   };
   return props;
 }

@@ -12,9 +12,7 @@ import Landscape from './3d/ProceduralLandscape';
 class Scene extends React.Component {
 
     constructor(props) {
-      super(props);
-
-  
+      super(props);  
     }
 
   render() {
