@@ -13,12 +13,10 @@ require( "imports-loader?THREE=three!../../externals/three.js/examples/js/postpr
 require( "imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/ShaderPass.js");
 require( "imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/MaskPass.js");
 require( "imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/SSAOPass.js");
-
 require( "imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/DotScreenShader.js");
 require( "imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/CopyShader.js");
 require( "imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/RGBShiftShader.js");
 require( "imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/SSAOShader.js");
-
 require( "imports-loader?THREE=three!../../externals/three.js/examples/js/controls/FlyControls.js");
 
 import SimplexNoise from "imports-loader?THREE=three!../../externals/threex/SimplexNoise.js";
@@ -126,6 +124,30 @@ setObjectQuaternion( quaternion, alpha, beta, gamma, orient ) {
         }
     
 
+
+        showGlobalEvent(event = {}) {
+          this.clearDeadGlobalGeo();
+          // extract a latlong from the Tweet object
+          let latlong = false;
+          let position = false;
+          let flagpolePosition = false;
+          let height = 64.5;
+      
+          if(! event.coordinates ){
+            event.coordinates = this.fakeCoords();
+          }
+          let beacon = new Beacon( event, 64.5, this.shaderRenderer.texture, 3000 );
+          beacon.children.map( (e) => {
+            e.lookAt( this.globe.position );
+          });
+      
+          this.animateCamera( beacon.getPosition(), () =>{
+            this.globalEvents.add( beacon );
+            beacon.activate()
+          } );
+      
+        }
+      
   buildScene(){
 
     super.buildScene();
