@@ -9,6 +9,7 @@ import SimplexNoise from "imports-loader?THREE=three!../../externals/threex/Simp
 import * as THREEx from "imports-loader?THREE=three!../../externals/threex/threex.terrain.js";
 import config from "config";
 import openSocket from "socket.io-client";
+import BeaconPlanar from './BeaconPlanar';
 
 let TWEEN = require("tween.js");
 
@@ -100,6 +101,11 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.cameraRotate(deviceOrientation);
   }
 
+
+  componentWillReceiveProps(nextProps) {
+    this.showGlobalEvent( nextProps.tweets[nextProps.tweets.length-1] )
+  }
+
   cameraRotate(obj) {
     this.alphaOffset = 0;
     var alpha = obj.alpha
@@ -126,7 +132,8 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
   }
 
   showGlobalEvent(event = {}) {
-    this.clearDeadGlobalGeo();
+    //TODO clear old go
+    // this.clearDeadGlobalGeo();
     // extract a latlong from the Tweet object
     let latlong = false;
     let position = false;
@@ -136,7 +143,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     if (!event.coordinates) {
       event.coordinates = this.fakeCoords();
     }
-    let beacon = new Beacon(event, 64.5, this.shaderRenderer.texture, 3000);
+    const beacon = new BeaconPlanar(event, 64.5, this.shaderRenderer.texture, 3000);
     beacon.children.map(e => {
       e.lookAt(this.globe.position);
     });

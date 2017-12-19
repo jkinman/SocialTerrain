@@ -13,7 +13,6 @@ function reducer(state = initialState, action) {
 
   switch (action.type) {
     case NEW_TWEET: {
-      console.log(action)
       return {
         ...state,
         tweets: [...state.tweets, action.payload]

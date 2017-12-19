@@ -19,8 +19,8 @@ import Main from './sceneContainer';
 /* Populated by react-webpack-redux:reducer */
 class App extends Component {
   render() {
-    const {actions, camera, newTweet} = this.props;
-    return <Main actions={actions} camera={camera} />;
+    const {actions, camera, newTweet, tweets} = this.props;
+    return <Main actions={actions} camera={camera} tweets={tweets}/>;
   }
 }
 /* Populated by react-webpack-redux:reducer
@@ -42,7 +42,8 @@ function mapStateToProps(state) {
   // eslint-disable-line no-unused-vars
   /* Populated by react-webpack-redux:reducer */
   const props = {
-    camera: state.camera
+    camera: state.camera,
+    tweets: state.social.tweets
   };
   return props;
 }
