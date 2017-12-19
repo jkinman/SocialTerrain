@@ -1,7 +1,7 @@
 "use strict";
 
 import * as THREE from "three";
-import markerPlanar from './markers/markerPlanar';
+import MarkerPlanar from "./markers/markerPlanar";
 
 window.THREE = THREE;
 let TWEEN = require("tween.js");
@@ -22,9 +22,9 @@ class Beacon extends THREE.Object3D {
     this.lifeSpan = event.lifeSpan;
     if (this.lifeSpan === undefined) {
       this.lifeSpan = lifeSpan;
-	}
+    }
 
-    this.globalGeoMarker = markerPlanar(
+    this.globalGeoMarker = this.createMarker(
       event,
       globeDiameter,
       map,
@@ -69,7 +69,6 @@ class Beacon extends THREE.Object3D {
         .start();
     }
   }
-
 
   makeShaderSprite(map, size = 0.5) {
     size = Math.max(size, 0.3);
@@ -283,6 +282,71 @@ class Beacon extends THREE.Object3D {
     vector3.z = Math.sin(phi) * Math.sin(theta) * rad;
 
     return vector3;
+  }
+
+  createMarker(event, position, map, lifespan = 6000) {
+    this.beacon = undefined;
+    this.shockwave = undefined;
+    // let position = this.latLonToVector3(
+    //   event.coordinates[0],
+    //   event.coordinates[1],
+    //   globeDiameter
+    // );
+    // let flagpolePosition = this.latLonToVector3(
+    //   event.coordinates[0],
+    //   event.coordinates[1],
+    //   globeDiameter + 1
+    // );
+
+    this.beaconPosition = position;
+    if (event.shader) {
+      this.beacon = this.makeShaderSprite(event.impact, map);
+      this.beacon.position.x = position.x;
+      this.beacon.position.y = position.y;
+      this.beacon.position.z = position.z;
+    }
+
+    if (event.shockwave) {
+      let geo = new THREE.CircleGeometry(1, 32);
+      let material = new THREE.MeshLambertMaterial({
+        color: CONTRAST,
+        side: THREE.BackSide,
+        transparent: true,
+        opacity: 1.0,
+        emissiveIntensity: 0.5,
+        emissive: 0xffffff
+      });
+      this.shockwave = new THREE.Mesh(geo, material);
+
+      this.shockwave.position.x = position.x;
+      this.shockwave.position.y = position.y;
+      this.shockwave.position.z = position.z;
+
+      this.add(this.shockwave);
+    }
+
+    if (!event.title) {
+      event.title = `${position.x}, ${position.y}`;
+    }
+
+    if (!event.subtitle) {
+      event.subtitle = `$${2000 * Math.random()} | 6 mins ago`;
+    }
+
+    this.spritey = this.makeTextSprite(event, {});
+
+    if (event.coordinates) {
+      this.spritey.position.x = flagpolePosition.x;
+      this.spritey.position.y = flagpolePosition.y;
+      this.spritey.position.z = flagpolePosition.z;
+
+      this.add(this.spritey);
+      if (this.beacon) {
+        this.add(this.beacon);
+      }
+    }
+
+    return this;
   }
 }
 

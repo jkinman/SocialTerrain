@@ -60,6 +60,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     }
     this.start = Date.now();
     this.clock = new THREE.Clock();
+    
   }
 
   componentDidMount() {
@@ -130,33 +131,39 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     quaternion.multiply(q1); // camera looks out the back of the device, not the top
     quaternion.multiply(q0.setFromAxisAngle(zee, -orient)); // adjust for screen orientation
   }
-
+  
+  fakeCoords(obj) {
+    return {
+      x:obj.position.x,
+      y:obj.position.y,
+      z:obj.position.z+5,
+    };
+  }
+  
   showGlobalEvent(event = {}) {
-    //TODO clear old go
-    // this.clearDeadGlobalGeo();
-    // extract a latlong from the Tweet object
-    let latlong = false;
-    let position = false;
-    let flagpolePosition = false;
-    let height = 64.5;
 
-    if (!event.coordinates) {
-      event.coordinates = this.fakeCoords();
-    }
-    const beacon = new BeaconPlanar(event, 64.5, this.shaderRenderer.texture, 3000);
-    beacon.children.map(e => {
-      e.lookAt(this.globe.position);
-    });
+    //TODO clear old geo
 
-    this.animateCamera(beacon.getPosition(), () => {
+    const position = this.fakeCoords(this.cameraPivot);
+
+    const beacon = new BeaconPlanar(event, position, this.shaderRenderer.texture, 3000);
+    // beacon.children.map(e => {
+    //   e.lookAt(this.globe.position);
+    // });
+
+    // this.animateCamera(beacon.getPosition(), () => {
       this.globalEvents.add(beacon);
       beacon.activate();
-    });
+    // });
   }
 
   buildScene() {
     super.buildScene();
-
+    
+    //add the marker group
+    this.globalEvents = new THREE.Object3D();    
+    this.worldgroup.add( this.globalEvents );
+    
     this.camera.position.x = 20;
     this.camera.position.y = 20;
     this.camera.position.z = 20;
