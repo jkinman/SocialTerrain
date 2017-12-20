@@ -10,9 +10,13 @@ import * as THREEx from "imports-loader?THREE=three!../../externals/threex/three
 import config from "config";
 import openSocket from "socket.io-client";
 import BeaconPlanar from "./BeaconPlanar";
+import TreeObj from '../../static/3dAssets/LowTree/Tree low.obj';
+// import TreeMaterialFile from '../../static/3dAssets/LowTree/Tree low.mtl';
 
 let TWEEN = require("tween.js");
 
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/loaders/MTLLoader.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/loaders/OBJLoader.js");
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/EffectComposer.js");
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/RenderPass.js");
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/ShaderPass.js");
@@ -42,7 +46,7 @@ const euler = new THREE.Euler();
 const q0 = new THREE.Quaternion();
 const q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
 
-const CRAWL_SPEED = 0.05;
+const CRAWL_SPEED = 0.04;
 const CAMERA_ANIMATION_DELAY = 3000;
 const CAMERA_ROTATE_TIME = 3000;
 const TEXTURE_SIZE = 512;
@@ -140,9 +144,9 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
 
   fakeCoords(obj) {
     return {
-      x: obj.position.x + (Math.random()*30-15),
-      y: obj.position.y + (Math.random()*30-15),
-      z: obj.position.z - (Math.random()*100 + 30)
+      x: obj.position.x + (Math.random()*20-10),
+      y: obj.position.y + (Math.random()*20-10),
+      z: obj.position.z - (Math.random()*50 + 25)
     };
   }
 
@@ -150,9 +154,10 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     // clear old geo
     this.clearDeadGlobalGeo();
     const position = this.fakeCoords(this.cameraPivot);
-
+    let cameraPivotPosition	= this.cameraPivot.position;
+    
     position.y	= 1 + THREEx.Terrain.planeToHeightMapCoords(
-      this.heightMap, this.groundMesh, position.x, position.z);
+      this.heightMap, this.groundMesh, cameraPivotPosition.x, cameraPivotPosition.z);
 
 
     const beacon = new BeaconPlanar(
@@ -175,8 +180,73 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     }
   }
 
+
+  handleTrees( obj3dTree ){
+    // let textureLoader = new THREE.TextureLoader( );
+    // let texture = textureLoader.load( 'textures/UV_Grid_Sm.jpg' );
+
+    // let materialLoader = new THREE.MTLLoader( );
+    // let material = materialLoader.load( TreeMaterialFile );
+    this.trees = new THREE.Group();
+    this.trees.add( obj3dTree);
+    this.scene.add(this.trees);
+    
+    let material = new THREE.MeshBasicMaterial({
+      wireframe: false,
+      color: 0x229922,      
+      side: THREE.DoubleSide,
+    });
+
+    // obj3dTree.traverse(( child ) => {
+    //   if ( child instanceof THREE.Mesh ) {
+    //     child.material = material;
+    //   }
+    // });
+    obj3dTree.scale.set( 0.1, 0.1, 0.1);
+    this.obj3dTree = obj3dTree.clone(true);
+    
+    let cameraPivotPosition	= this.cameraPivot.position;
+    let n = 0;
+    while (n < 10) {
+      n++;
+
+      let treeCopy = new THREE.Group();
+      treeCopy = this.obj3dTree.clone(true);
+      this.trees.add( treeCopy );
+      treeCopy.children = obj3dTree.children.slice();
+      treeCopy.traverse(( child ) => {
+        if ( child instanceof THREE.Mesh ) {
+          child.material = material;
+        }
+      });
+      let randomScale = Math.random() * 0.5;
+      treeCopy.scale.set( randomScale, randomScale, randomScale);
+      let randomPos = {
+        x:Math.random() * 150 -75, 
+        y:Math.random() * 250 -125,
+        z:Math.random() * 250 -250
+      };
+      randomPos.y	= THREEx.Terrain.planeToHeightMapCoords(
+        this.heightMap, 
+        this.groundMesh, 
+        randomPos.x, 
+        randomPos.z
+      );
+
+      treeCopy.position.set(randomPos.x, randomPos.y, randomPos.z);
+
+    }
+    obj3dTree.position.set(0,0,0);
+    // obj3dTree.position.set(this.fakeCoords(this.cameraPivot));
+    console.log(this.trees)
+    // this.camera.lookAt( obj3dTree.position)
+  }
+
   buildScene() {
     super.buildScene();
+
+    let loader = new THREE.OBJLoader();
+    loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
 
     //add the marker group
     // world objects group
