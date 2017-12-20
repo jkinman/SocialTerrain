@@ -1,6 +1,7 @@
 "use strict";
 
 import * as THREE from "three";
+const CanvasTextWrapper = require('canvas-text-wrapper').CanvasTextWrapper;
 
 window.THREE = THREE;
 let TWEEN = require("tween.js");
@@ -95,7 +96,7 @@ class Beacon extends THREE.Object3D {
 
   makeTextSprite(message, parameters) {
     this.OVERLAY_WIDTH = 128;
-    this.OVERLAY_HEIGHT = 75;
+    this.OVERLAY_HEIGHT = 128;
     let LEFT_OFFSET = 256;
     let TOP_OFFSET = 256;
     if (parameters === undefined) parameters = {};
@@ -117,9 +118,96 @@ class Beacon extends THREE.Object3D {
       : { r: 200, g: 200, b: 200, a: 1.0 };
     let canvas = document.createElement("canvas");
     let context = canvas.getContext("2d");
-    canvas.width = 512;
-    canvas.height = 512;
+    canvas.width = this.OVERLAY_WIDTH;
+    canvas.height = this.OVERLAY_HEIGHT;
     context.font = "Bold " + fontsize + "px " + fontface;
+
+    let fontOptions = { 
+      font: '12px Open Sans, sans-serif',
+      lineHeight: 1,
+      textAlign: 'left',
+      verticalAlign: 'top',
+      paddingX: 0,
+      paddingY: 0,
+      fitParent: true,
+      lineBreak: 'auto',
+      strokeText: false,
+      sizeToFill: false,
+      maxFontSizeToFill: false,
+      allowNewLine: true,
+      justifyLines: false,
+      renderHDPI: true,
+      textDecoration: 'none'
+      };
+
+    // get size data (height depends only on font size)
+    let metrics = context.measureText(message.title);
+    let textWidth = metrics.width;
+    // DRAW BLACK BACKGROUND
+    context.fillStyle = "rgb(0,0,0, 0.3)";
+    context.lineWidth = borderThickness;
+    context.fillRect(
+      0,
+      0,
+      this.OVERLAY_WIDTH,
+      this.OVERLAY_HEIGHT
+    );
+
+    // draw cirlce
+    if( message.circle ){
+      let radius = this.OVERLAY_HEIGHT / 2;
+      context.strokeStyle = '#000000';
+      context.lineWidth = 1;
+      context.fillStyle = '#ff0000';
+      context.beginPath();
+      context.arc( LEFT_OFFSET + radius, LEFT_OFFSET + radius, radius, 0, 2*Math.PI, false );
+      context.stroke();
+      context.closePath();
+      context.fill();
+    }
+  
+
+    // FLAG POLE
+    if( message.flagpole ){
+      context.fillStyle = "white";
+      context.fillRect(
+        LEFT_OFFSET,
+        TOP_OFFSET - this.OVERLAY_HEIGHT*3,
+        4,
+        this.OVERLAY_HEIGHT*2
+      );
+    }
+  
+    // text color
+    context.fillStyle = "rgba(68, 167, 242, 1.0 )";
+
+    // TITLE
+    let y = 30;
+    context.fillText(
+      message.title,
+      borderThickness + LEFT_OFFSET,
+      y + TOP_OFFSET - this.OVERLAY_HEIGHT
+    );
+
+    // SUBTITLE
+    context.fillStyle = "rgba(255, 255, 255, 1.0 )";
+    y += 25;
+
+    CanvasTextWrapper(canvas, message.subtitle, {
+      font: '12px Open Sans, sans-serif',
+      lineHeight: 1,
+    });
+    
+    // canvas contents will be used for a texture
+    let texture = new THREE.Texture(canvas);
+    texture.needsUpdate = true;
+    // texture.anisotropy = 32;
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    // texture.offset = new THREE.Vector2( 0, 0 );
+
+    // DRAW ANY IMAGES
     if (message.image) {
       context.drawImage(message.image, 64, 64, 64, 64);
     }
@@ -135,63 +223,9 @@ class Beacon extends THREE.Object3D {
           this.OVERLAY_HEIGHT
         );
         texture.needsUpdate = true;
-        // finishSprite( canvas, context );
       };
       img.src = message.imageUrl;
     }
-
-    // get size data (height depends only on font size)
-    let metrics = context.measureText(message.title);
-    let textWidth = metrics.width;
-    // DRAW BLACK BACKGROUND
-    context.fillStyle = "rgb(0,0,0, 0.3)";
-    context.lineWidth = borderThickness;
-    context.fillRect(
-      LEFT_OFFSET,
-      TOP_OFFSET - this.OVERLAY_HEIGHT,
-      300,
-      this.OVERLAY_HEIGHT
-    );
-
-    // FLAG POLE
-    context.fillStyle = "white";
-    context.fillRect(
-      LEFT_OFFSET,
-      TOP_OFFSET - this.OVERLAY_HEIGHT,
-      4,
-      this.OVERLAY_HEIGHT
-    );
-    // text color
-    context.fillStyle = "rgba(68, 167, 242, 1.0 )";
-
-    // TITLE
-    let y = 30;
-    context.fillText(
-      message.title,
-      borderThickness + LEFT_OFFSET,
-      y + TOP_OFFSET - this.OVERLAY_HEIGHT
-    );
-
-    // SUBTITLE
-    context.fillStyle = "rgba(255, 255, 255, 1.0 )";
-    y += 25;
-    fontsize = Math.round(fontsize * 0.75);
-    context.font = "Bold " + fontsize + "px " + fontface;
-
-    context.fillText(
-      message.subtitle,
-      borderThickness + LEFT_OFFSET,
-      y + TOP_OFFSET - this.OVERLAY_HEIGHT
-    );
-
-    // canvas contents will be used for a texture
-    let texture = new THREE.Texture(canvas);
-    texture.needsUpdate = true;
-    // texture.anisotropy = 32;
-    texture.generateMipmaps = false;
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    // texture.offset = new THREE.Vector2( 0, 0 );
 
     let spriteMaterial = new THREE.SpriteMaterial({
       map: texture,
@@ -205,7 +239,8 @@ class Beacon extends THREE.Object3D {
       side: THREE.DoubleSide,
     });
     var sprite = new THREE.Sprite(spriteMaterial);
-    sprite.scale.set(42, 42, 1.0);
+    // sprite.scale.set(42, 42, 1.0);
+    sprite.scale.set(10, 10, 1.0);
 
     return sprite;
   }
