@@ -106,7 +106,7 @@ class Beacon extends THREE.Object3D {
       : "Open Sans";
     let fontsize = parameters.hasOwnProperty("fontsize")
       ? parameters["fontsize"]
-      : 20;
+      : 12;
     let borderThickness = parameters.hasOwnProperty("borderThickness")
       ? parameters["borderThickness"]
       : 20;
@@ -120,7 +120,7 @@ class Beacon extends THREE.Object3D {
     let context = canvas.getContext("2d");
     canvas.width = this.OVERLAY_WIDTH;
     canvas.height = this.OVERLAY_HEIGHT;
-    context.font = "Bold " + fontsize + "px " + fontface;
+    context.font = "Regular " + fontsize + "px " + fontface;
 
     let fontOptions = { 
       font: '12px Open Sans, sans-serif',
@@ -157,7 +157,7 @@ class Beacon extends THREE.Object3D {
     if( message.circle ){
       let radius = this.OVERLAY_HEIGHT / 2;
       context.strokeStyle = '#000000';
-      context.lineWidth = 1;
+      context.lineWidth = 0;
       context.fillStyle = '#ff0000';
       context.beginPath();
       context.arc( LEFT_OFFSET + radius, LEFT_OFFSET + radius, radius, 0, 2*Math.PI, false );
@@ -194,8 +194,9 @@ class Beacon extends THREE.Object3D {
     y += 25;
 
     CanvasTextWrapper(canvas, message.subtitle, {
-      font: '12px Open Sans, sans-serif',
+      font: '8px Open Sans, sans-serif',
       lineHeight: 1,
+      justifyLines: true,      
     });
     
     // canvas contents will be used for a texture
