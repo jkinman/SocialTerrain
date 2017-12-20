@@ -1,7 +1,6 @@
 "use strict";
 
 import * as THREE from "three";
-import MarkerPlanar from "./markers/markerPlanar";
 
 window.THREE = THREE;
 let TWEEN = require("tween.js");
@@ -14,7 +13,7 @@ const FADE_OUT_TIME = 1000;
 const SHOCKWAVE_ANIM_TIME = 1500;
 
 class Beacon extends THREE.Object3D {
-  constructor(event, globeDiameter, map, lifeSpan = 3000) {
+  constructor(event, position, map, lifeSpan = 3000) {
     super();
     this.event = event;
     this.alive = false;
@@ -24,15 +23,13 @@ class Beacon extends THREE.Object3D {
       this.lifeSpan = lifeSpan;
     }
 
-    this.globalGeoMarker = this.createMarker(
+    this.GeoMarker = this.createMarker(
       event,
-      globeDiameter,
+      position,
       map,
       lifeSpan
     );
   }
-
-  destructor() {}
 
   activate() {
     this.alive = true;
@@ -124,7 +121,6 @@ class Beacon extends THREE.Object3D {
     canvas.height = 512;
     context.font = "Bold " + fontsize + "px " + fontface;
     if (message.image) {
-      debugger;
       context.drawImage(message.image, 64, 64, 64, 64);
     }
     if (message.imageUrl) {
@@ -205,7 +201,8 @@ class Beacon extends THREE.Object3D {
       depthWrite: false,
       depthTest: false,
       blending: THREE.NormalBlending,
-      fog: true
+      fog: true,
+      side: THREE.DoubleSide,
     });
     var sprite = new THREE.Sprite(spriteMaterial);
     sprite.scale.set(42, 42, 1.0);
@@ -335,10 +332,10 @@ class Beacon extends THREE.Object3D {
 
     this.spritey = this.makeTextSprite(event, {});
 
-    if (event.coordinates) {
-      this.spritey.position.x = flagpolePosition.x;
-      this.spritey.position.y = flagpolePosition.y;
-      this.spritey.position.z = flagpolePosition.z;
+    if (position) {
+      this.spritey.position.x = position.x;
+      this.spritey.position.y = position.y;
+      this.spritey.position.z = position.z;
 
       this.add(this.spritey);
       if (this.beacon) {

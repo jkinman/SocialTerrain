@@ -9,7 +9,7 @@ import SimplexNoise from "imports-loader?THREE=three!../../externals/threex/Simp
 import * as THREEx from "imports-loader?THREE=three!../../externals/threex/threex.terrain.js";
 import config from "config";
 import openSocket from "socket.io-client";
-import BeaconPlanar from './BeaconPlanar';
+import BeaconPlanar from "./BeaconPlanar";
 
 let TWEEN = require("tween.js");
 
@@ -42,6 +42,7 @@ const euler = new THREE.Euler();
 const q0 = new THREE.Quaternion();
 const q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
 
+const CRAWL_SPEED = 0.05;
 const CAMERA_ANIMATION_DELAY = 3000;
 const CAMERA_ROTATE_TIME = 3000;
 const TEXTURE_SIZE = 512;
@@ -60,7 +61,6 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     }
     this.start = Date.now();
     this.clock = new THREE.Clock();
-    
   }
 
   componentDidMount() {
@@ -73,7 +73,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     var geometry = new THREE.TorusGeometry(6, 3, 16, 10);
     var material = new THREE.MeshBasicMaterial({
       color: 0xffff00,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     });
     // this.torus = new THREE.Mesh( geometry, material );
     // this.scene.add( this.torus );
@@ -96,15 +96,14 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     TWEEN.update();
 
     // creep the camera gimble along
-    this.cameraPivot.position.z -= 0.01;
+    this.cameraPivot.position.z -= CRAWL_SPEED;
 
     if (!deviceOrientation) return;
     this.cameraRotate(deviceOrientation);
   }
 
-
   componentWillReceiveProps(nextProps) {
-    this.showGlobalEvent( nextProps.tweets[nextProps.tweets.length-1] )
+    this.showGlobalEvent(nextProps.tweets[nextProps.tweets.length - 1]);
   }
 
   cameraRotate(obj) {
@@ -131,39 +130,51 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     quaternion.multiply(q1); // camera looks out the back of the device, not the top
     quaternion.multiply(q0.setFromAxisAngle(zee, -orient)); // adjust for screen orientation
   }
-  
+
   fakeCoords(obj) {
     return {
-      x:obj.position.x,
-      y:obj.position.y,
-      z:obj.position.z+5,
+      x: obj.position.x + (Math.random()*30-15),
+      y: obj.position.y + (Math.random()*30-15),
+      z: obj.position.z - (Math.random()*100 + 30)
     };
   }
-  
+
   showGlobalEvent(event = {}) {
-
-    //TODO clear old geo
-
+    // clear old geo
+    this.clearDeadGlobalGeo();
     const position = this.fakeCoords(this.cameraPivot);
 
-    const beacon = new BeaconPlanar(event, position, this.shaderRenderer.texture, 3000);
-    // beacon.children.map(e => {
-    //   e.lookAt(this.globe.position);
-    // });
+    const beacon = new BeaconPlanar(
+      {...event, shockwave: true, title: event.handle, subtitle: event.text, imageUrl: event.profile},
+      position,
+      this.shaderRenderer.texture,
+      20000
+    );
+    
+    this.globalEvents.add(beacon);
+    beacon.activate();
+    this.camera.lookAt(beacon.position)
+  }
 
-    // this.animateCamera(beacon.getPosition(), () => {
-      this.globalEvents.add(beacon);
-      beacon.activate();
-    // });
+  clearDeadGlobalGeo( all=false ) {
+    for (var i = this.globalEvents.children.length -1; i >= 0; i--) {
+      if( all || !this.globalEvents.children[i].alive ){
+        this.globalEvents.remove( this.globalEvents.children[i] );
+      }
+    }
   }
 
   buildScene() {
     super.buildScene();
-    
+
     //add the marker group
-    this.globalEvents = new THREE.Object3D();    
-    this.worldgroup.add( this.globalEvents );
-    
+    // world objects group
+    this.worldgroup = new THREE.Object3D();
+    this.scene.add(this.worldgroup);
+
+    this.globalEvents = new THREE.Object3D();
+    this.worldgroup.add(this.globalEvents);
+
     this.camera.position.x = 20;
     this.camera.position.y = 20;
     this.camera.position.z = 20;
