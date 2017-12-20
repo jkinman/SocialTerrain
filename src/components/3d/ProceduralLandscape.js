@@ -98,8 +98,15 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     // creep the camera gimble along
     this.cameraPivot.position.z -= CRAWL_SPEED;
 
-    if (!deviceOrientation) return;
-    this.cameraRotate(deviceOrientation);
+    if( this.heightMap && this.groundMesh && this.cameraPivot ) {
+      let cameraPivotPosition	= this.cameraPivot.position;
+      cameraPivotPosition.y	= 2 + THREEx.Terrain.planeToHeightMapCoords(
+        this.heightMap, this.groundMesh, cameraPivotPosition.x, cameraPivotPosition.z);
+    }
+    
+    if (deviceOrientation){
+      this.cameraRotate(deviceOrientation);
+    }
   }
 
   componentWillReceiveProps(nextProps) {
@@ -143,6 +150,10 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     // clear old geo
     this.clearDeadGlobalGeo();
     const position = this.fakeCoords(this.cameraPivot);
+
+    position.y	= 1 + THREEx.Terrain.planeToHeightMapCoords(
+      this.heightMap, this.groundMesh, position.x, position.z);
+
 
     const beacon = new BeaconPlanar(
       {...event, shockwave: true, title: event.handle, subtitle: event.text, imageUrl: event.profile},
@@ -204,10 +215,10 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     light.position.set(-0.5, -0.5, -2);
     this.scene.add(light);
 
-    var heightMap = THREEx.Terrain.allocateHeightMap(512, 512);
-    THREEx.Terrain.simplexHeightMap(heightMap);
-    var geometry = THREEx.Terrain.heightMapToPlaneGeometry(heightMap);
-    THREEx.Terrain.heightMapToVertexColor(heightMap, geometry);
+    this.heightMap = THREEx.Terrain.allocateHeightMap(512, 512);
+    THREEx.Terrain.simplexHeightMap(this.heightMap);
+    let geometry = THREEx.Terrain.heightMapToPlaneGeometry(this.heightMap);
+    THREEx.Terrain.heightMapToVertexColor(this.heightMap, geometry);
 
     /* Wireframe built-in color is white, no need to change that */
     var material = new THREE.MeshBasicMaterial({
@@ -222,7 +233,11 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     mesh.scale.x = 3;
     mesh.scale.z = 0.1;
     mesh.scale.multiplyScalar(100);
-
+    
+    // store the ground
+    this.groundGeo = geometry;
+    this.groundMesh = mesh;
+    
     // onRenderFcts.push(function(delta, now){
     //   mesh.rotation.z += 0.2 * delta;
     // })
