@@ -8,6 +8,8 @@ let TWEEN = require('tween.js');
 const CAMERA_ANIMATION_DELAY = 3000;
 const CAMERA_ROTATE_TIME = 3000;
 const TEXTURE_SIZE = 512;
+const TEXTURE_HEIGHT = TEXTURE_SIZE;
+const TEXTURE_WIDTH = TEXTURE_SIZE * 2;
 const PRIMARY = 0x53BDFD;
 const GREEN = 0x1ec503;
 const BACKGROUND_MESH = false;
@@ -77,7 +79,7 @@ class BaseSceneComponent extends React.Component {
 
 
     // setup off screen graphics buffer
-    this.shaderRenderer = new THREE.WebGLRenderTarget( TEXTURE_SIZE, TEXTURE_SIZE, {
+    this.shaderRenderer = new THREE.WebGLRenderTarget( TEXTURE_WIDTH, TEXTURE_HEIGHT, {
           minFilter:THREE.LinearFilter,
           magFilter:THREE.LinearFilter,
           generateMipmaps: false,
@@ -87,9 +89,9 @@ class BaseSceneComponent extends React.Component {
           transparent:true,
           format: THREE.RGBAFormat,
     } );
-    this.shaderRenderer.setSize( TEXTURE_SIZE, TEXTURE_SIZE);
+    this.shaderRenderer.setSize( TEXTURE_WIDTH, TEXTURE_HEIGHT);
 
-    textureCamera = new THREE.OrthographicCamera(TEXTURE_SIZE / - 2,TEXTURE_SIZE / 2,TEXTURE_SIZE / 2,TEXTURE_SIZE / - 2, -1000, 100000 );
+    textureCamera = new THREE.OrthographicCamera(TEXTURE_WIDTH / - 2,TEXTURE_WIDTH / 2,TEXTURE_HEIGHT / 2,TEXTURE_HEIGHT / - 2, -1000, 100000 );
     shaderScene = new THREE.Scene();
 
     if( preMadeCamera ){
@@ -284,7 +286,7 @@ class BaseSceneComponent extends React.Component {
         iResolution: {type: 'vec3',value: [0, TEXTURE_SIZE * .7, 0]}
       },
     } );
-    let geo = new THREE.PlaneGeometry( TEXTURE_SIZE, TEXTURE_SIZE );
+    let geo = new THREE.PlaneGeometry( TEXTURE_WIDTH, TEXTURE_HEIGHT );
     let mesh = new THREE.Mesh( geo, this.bufferShaderMaterial );
 
     shaderScene.add( mesh )

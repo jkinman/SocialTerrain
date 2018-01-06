@@ -102,7 +102,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.controls.movementSpeed = 2;
     this.controls.domElement = document.getElementById( 'proceduralLandscape-component' );
     this.controls.rollSpeed = Math.PI / 24;
-    this.controls.autoForward = true;
+    this.controls.autoForward = false;
     this.controls.dragToLook = true;
 
     this.mounted = true;
@@ -156,7 +156,12 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
 
 
     const beacon = new BeaconPlanar(
-      {...event, shockwave: true, title: event.handle, subtitle: event.text, imageUrl: event.profile},
+      {...event, 
+        shockwave: true, 
+        title: event.handle, 
+        subtitle: event.text, 
+        imageUrl: event.profile,
+        impact: 1.5},
       position,
       this.shaderRenderer.texture,
       20000
@@ -164,7 +169,14 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     
     this.globalEvents.add(beacon);
     beacon.activate();
-    this.camera.lookAt(beacon.position)
+
+    // let newObj;
+    // newObj = this.cloneLoadedOBJ( this.obj3dTree.clone(), Math.random() / 5 + 0.01 )
+    // newObj.position.set(position.x, position.y, position.z)
+    // this.trees.add(newObj)
+    // this.scene.add(newObj)
+  
+    // this.camera.lookAt(position.x, position.y, position.z)
   }
 
   clearDeadGlobalGeo( all=false ) {
@@ -185,13 +197,20 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
 
     this.obj3dTree = obj3dTree;
 
-    setInterval( (obj) => {
-    let newObj;
-      newObj = this.cloneLoadedOBJ( this.obj3dTree.clone(), Math.random() / 5 + 0.01 )
-      // this.trees.add(newObj)
-      this.scene.add(newObj)
-      newObj.position.set(this.getRandomInt(200),0,this.getRandomInt(200))  
-    }, 3000)
+    // setInterval( (obj) => {
+    //   let newObj;
+    //   newObj = this.cloneLoadedOBJ( this.obj3dTree.clone(), Math.random() / 5 + 0.01 )
+    //   // this.trees.add(newObj)
+    //   this.scene.add(newObj)
+    //   // let newPos = [this.getRandomInt(200),this.getRandomInt(200),this.getRandomInt(200)]
+    //   newObj.position.set(this.getRandomInt(200),0,this.getRandomInt(200))  
+    //   if( this.heightMap && this.groundMesh  ) {
+    //     let objPos	= newObj.position;
+    //     objPos.y	= THREEx.Terrain.planeToHeightMapCoords(
+    //       this.heightMap, this.groundMesh, objPos.x, objPos.z);
+    //   }
+  
+    // }, 3000)
 
   }
 
@@ -217,8 +236,6 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
         treeCopy.add( newMesh) 
       }
     });
-
-    console.log(treeCopy)
     return treeCopy;
   }
 
@@ -252,7 +269,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     );
     this.scene.add(this.ambientLight);
 
-    this.scene.fog = new THREE.Fog( FOG_COLOUR, 5, 50);
+    // this.scene.fog = new THREE.Fog( FOG_COLOUR, 5, 50);
     var light = new THREE.AmbientLight(0x202020);
     // this.scene.add( light )
     var light = new THREE.DirectionalLight("white", 5);
@@ -303,7 +320,10 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.scene.add(this.cameraPivot);
     
     this.cameraPivot.position.set(0, 0, 0);
-    this.camera.position.set(0, 0, 0);
+    this.camera.position.z = 100;
+    this.camera.position.y = 50;
+    this.camera.position.set(0,0,0);
+    this.camera.lookAt(0,0,0)
 
   }
 

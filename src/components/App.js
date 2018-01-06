@@ -1,6 +1,6 @@
 import React from 'react';
 import YeomanImage from './YeomanImage';
-import './app.css';
+import './app.scss';
 import Scene from './Scene';
 
 class AppComponent extends React.Component {

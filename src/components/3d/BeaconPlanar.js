@@ -9,9 +9,11 @@ let TWEEN = require("tween.js");
 const TEXTURE_SIZE = 512;
 const PRIMARY = 0x53bdfd;
 const GREEN = 0x1ec503;
-const CONTRAST = 0xff6600;
+// const CONTRAST = 0xff6600;
+const CONTRAST = 0x55ffff;
 const FADE_OUT_TIME = 1000;
 const SHOCKWAVE_ANIM_TIME = 1500;
+const BILLBOARD_OPACITY = 0.8;
 
 class Beacon extends THREE.Object3D {
   constructor(event, position, map, lifeSpan = 3000) {
@@ -57,27 +59,28 @@ class Beacon extends THREE.Object3D {
         .easing(TWEEN.Easing.Quadratic.Out)
         .to({ opacity: 0.0 }, SHOCKWAVE_ANIM_TIME)
         .start();
-      let size = 6;
+      let size = 60;
       if (this.event.impact) {
-        size = 12 * this.event.impact;
+        size = 5 * this.event.impact;
       }
       let blastGrow = new TWEEN.Tween(this.shockwave.scale)
         .easing(TWEEN.Easing.Quadratic.Out)
         .to({ y: size, x: size, z: 1 }, SHOCKWAVE_ANIM_TIME)
         .start();
     }
-  }
+}
 
   makeShaderSprite(map, size = 0.5) {
-    size = Math.max(size, 0.3);
-    size = Math.min(size, 1.0);
-    let scale = size * 100;
+    // size = Math.max(size, 0.3);
+    // size = Math.min(size, 1.0);
+    
+    let scale = size;
 
     let shaderSpriteMaterial = new THREE.SpriteMaterial({
       map: map,
       color: 0xffffff,
       transparent: true,
-      opacity: 0.9,
+      opacity: 1,
       depthWrite: false,
       depthTest: false,
       blending: THREE.AdditiveBlending,
@@ -85,82 +88,44 @@ class Beacon extends THREE.Object3D {
     });
 
     let sprite = new THREE.Sprite(shaderSpriteMaterial);
-    sprite.scale.set(scale, scale, 1.0);
-    // let group = new THREE.Object3D();
-    // group.add( sprite );
-    // sprite.position.y += 30;
-    // sprite.position.x += 10;
-    // return group;
+    sprite.scale.set(scale , scale /2, 1.0);
     return sprite;
   }
 
   makeTextSprite(message, parameters) {
-    this.OVERLAY_WIDTH = 128;
-    this.OVERLAY_HEIGHT = 128;
+    const OVERLAY_WIDTH = this.OVERLAY_WIDTH = 1024;
+    const OVERLAY_HEIGHT = this.OVERLAY_HEIGHT = 512;
     let LEFT_OFFSET = 256;
     let TOP_OFFSET = 256;
-    if (parameters === undefined) parameters = {};
-
-    let fontface = parameters.hasOwnProperty("fontface")
-      ? parameters["fontface"]
-      : "Open Sans";
-    let fontsize = parameters.hasOwnProperty("fontsize")
-      ? parameters["fontsize"]
-      : 12;
-    let borderThickness = parameters.hasOwnProperty("borderThickness")
-      ? parameters["borderThickness"]
-      : 20;
-    let borderColor = parameters.hasOwnProperty("borderColor")
-      ? parameters["borderColor"]
-      : { r: 200, g: 200, b: 200, a: 1.0 };
-    let backgroundColor = parameters.hasOwnProperty("backgroundColor")
-      ? parameters["backgroundColor"]
-      : { r: 200, g: 200, b: 200, a: 1.0 };
+    const TWITTER_PROFILE_WIDTH = this.OVERLAY_HEIGHT / 3;
+    const TWITTER_PROFILE_HEIGHT = this.OVERLAY_HEIGHT / 3;
     let canvas = document.createElement("canvas");
     let context = canvas.getContext("2d");
     canvas.width = this.OVERLAY_WIDTH;
     canvas.height = this.OVERLAY_HEIGHT;
-    context.font = "Regular " + fontsize + "px " + fontface;
-
-    let fontOptions = { 
-      font: '12px Open Sans, sans-serif',
-      lineHeight: 1,
-      textAlign: 'left',
-      verticalAlign: 'top',
-      paddingX: 0,
-      paddingY: 0,
-      fitParent: true,
-      lineBreak: 'auto',
-      strokeText: false,
-      sizeToFill: false,
-      maxFontSizeToFill: false,
-      allowNewLine: true,
-      justifyLines: false,
-      renderHDPI: true,
-      textDecoration: 'none'
-      };
+    const fontsize = 20;
+    const fontFamily = 'Oswald';
+    context.font = "Bold " + fontsize + "px " + fontFamily;
 
     // get size data (height depends only on font size)
     let metrics = context.measureText(message.title);
     let textWidth = metrics.width;
-    // DRAW BLACK BACKGROUND
-    context.fillStyle = "rgb(0,0,0, 0.3)";
-    context.lineWidth = borderThickness;
-    context.fillRect(
-      0,
-      0,
-      this.OVERLAY_WIDTH,
-      this.OVERLAY_HEIGHT
-    );
 
-    // draw cirlce
-    if( message.circle ){
+    // DRAW BOTTOM UP
+
+    // DRAW BLACK BACKGROUND
+    context.fillStyle = "white";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+
+    // draw circle
+    if( false ){
       let radius = this.OVERLAY_HEIGHT / 2;
       context.strokeStyle = '#000000';
       context.lineWidth = 0;
       context.fillStyle = '#ff0000';
       context.beginPath();
-      context.arc( LEFT_OFFSET + radius, LEFT_OFFSET + radius, radius, 0, 2*Math.PI, false );
+      context.arc( this.OVERLAY_HEIGHT/2, this.OVERLAY_HEIGHT/2, radius, 0, 2*Math.PI, false );
       context.stroke();
       context.closePath();
       context.fill();
@@ -168,7 +133,7 @@ class Beacon extends THREE.Object3D {
   
 
     // FLAG POLE
-    if( message.flagpole ){
+    if( message.flagpole && false){
       context.fillStyle = "white";
       context.fillRect(
         LEFT_OFFSET,
@@ -177,27 +142,50 @@ class Beacon extends THREE.Object3D {
         this.OVERLAY_HEIGHT*2
       );
     }
-  
-    // text color
-    context.fillStyle = "rgba(68, 167, 242, 1.0 )";
 
-    // TITLE
-    let y = 30;
-    context.fillText(
-      message.title,
-      borderThickness + LEFT_OFFSET,
-      y + TOP_OFFSET - this.OVERLAY_HEIGHT
-    );
+    // DRAW TEXT
+      context.font = 'bold 72px Oswald';
+      context.fillStyle = "black";
+      // TITLE
+      context.fillText(
+        `@${message.title}`,
+        TWITTER_PROFILE_WIDTH / 2,
+        OVERLAY_HEIGHT - TWITTER_PROFILE_WIDTH / 2
+      );
 
-    // SUBTITLE
-    context.fillStyle = "rgba(255, 255, 255, 1.0 )";
-    y += 25;
+      // BODY
+      context.font = 'bold 42px Oswald';
+      this.wrapText(context, message.subtitle, this.OVERLAY_HEIGHT, TWITTER_PROFILE_WIDTH / 2, this.OVERLAY_HEIGHT, 50);
+    
+    // DRAW ANY IMAGES
+    if (message.image) {
+      context.drawImage(message.image, 64, 64, 64, 64);
+    }
 
-    CanvasTextWrapper(canvas, message.subtitle, {
-      font: '8px Open Sans, sans-serif',
-      lineHeight: 1,
-      justifyLines: true,      
-    });
+    if (message.imageUrl) {
+      let img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        context.drawImage(
+          img,
+          TWITTER_PROFILE_WIDTH / 2,
+          TWITTER_PROFILE_WIDTH / 2,
+          TWITTER_PROFILE_WIDTH,
+          TWITTER_PROFILE_HEIGHT
+        );
+      };
+      img.src = message.imageUrl;
+    }
+
+    // CORNER FLAGS
+    if( false ){
+      context.fillStyle = "rgba(0,0,0,1)";      
+      context.beginPath();
+      context.moveTo(0, 0);
+      context.lineTo(this.OVERLAY_HEIGHT/5, 0);
+      context.lineTo(0, this.OVERLAY_HEIGHT/5);
+      context.fill();
+    }
     
     // canvas contents will be used for a texture
     let texture = new THREE.Texture(canvas);
@@ -206,33 +194,12 @@ class Beacon extends THREE.Object3D {
     texture.generateMipmaps = false;
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
-    // texture.offset = new THREE.Vector2( 0, 0 );
-
-    // DRAW ANY IMAGES
-    if (message.image) {
-      context.drawImage(message.image, 64, 64, 64, 64);
-    }
-    if (message.imageUrl) {
-      let img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        context.drawImage(
-          img,
-          LEFT_OFFSET - this.OVERLAY_HEIGHT,
-          TOP_OFFSET - this.OVERLAY_HEIGHT,
-          this.OVERLAY_HEIGHT,
-          this.OVERLAY_HEIGHT
-        );
-        texture.needsUpdate = true;
-      };
-      img.src = message.imageUrl;
-    }
 
     let spriteMaterial = new THREE.SpriteMaterial({
       map: texture,
       color: 0xffffff,
       transparent: true,
-      opacity: 0.8,
+      opacity: 1,
       depthWrite: false,
       depthTest: false,
       blending: THREE.NormalBlending,
@@ -241,9 +208,31 @@ class Beacon extends THREE.Object3D {
     });
     var sprite = new THREE.Sprite(spriteMaterial);
     // sprite.scale.set(42, 42, 1.0);
-    sprite.scale.set(10, 10, 1.0);
+    // sprite.scale.set(10, 10, 1.0);
+    
+    sprite.scale.set(10, 5, 1);
 
     return sprite;
+  }
+
+  wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    var words = text.split(' ');
+    var line = '';
+
+    for(var n = 0; n < words.length; n++) {
+      var testLine = line + words[n] + ' ';
+      var metrics = ctx.measureText(testLine);
+      var testWidth = metrics.width;
+      if (testWidth > maxWidth && n > 0) {
+        ctx.fillText(line, x, y);
+        line = words[n] + ' ';
+        y += lineHeight;
+      }
+      else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, x, y);
   }
 
   fadeIn() {
@@ -255,7 +244,7 @@ class Beacon extends THREE.Object3D {
         obj.opacity = 0;
         let anim = new TWEEN.Tween(obj)
           .easing(TWEEN.Easing.Quadratic.InOut)
-          .to({ opacity: 1 }, FADE_OUT_TIME)
+          .to({ opacity: BILLBOARD_OPACITY }, FADE_OUT_TIME)
           .start();
       } else if (e.materials) {
         obj = e.materials[0];
@@ -263,7 +252,7 @@ class Beacon extends THREE.Object3D {
         obj.opacity = 0;
         let anim = new TWEEN.Tween(obj)
           .easing(TWEEN.Easing.Quadratic.InOut)
-          .to({ opacity: 1 }, FADE_OUT_TIME)
+          .to({ opacity: BILLBOARD_OPACITY }, FADE_OUT_TIME)
           .start();
       }
     });
@@ -333,17 +322,19 @@ class Beacon extends THREE.Object3D {
 
     this.beaconPosition = position;
     if (event.shader) {
-      this.beacon = this.makeShaderSprite(event.impact, map);
+      this.beacon = this.makeShaderSprite( map, event.impact);
       this.beacon.position.x = position.x;
       this.beacon.position.y = position.y;
       this.beacon.position.z = position.z;
     }
 
-    if (event.shockwave) {
+    if (event.shockwave ) {
       let geo = new THREE.CircleGeometry(1, 32);
+      // let geo = new THREE.CylinderGeometry( 1, 1, 3, 32 );
+      
       let material = new THREE.MeshLambertMaterial({
         color: CONTRAST,
-        side: THREE.BackSide,
+        side: THREE.DoubleSide,
         transparent: true,
         opacity: 1.0,
         emissiveIntensity: 0.5,
@@ -354,6 +345,11 @@ class Beacon extends THREE.Object3D {
       this.shockwave.position.x = position.x;
       this.shockwave.position.y = position.y;
       this.shockwave.position.z = position.z;
+
+      var newDir = new THREE.Vector3(0, 1, 0);
+      var pos = new THREE.Vector3();
+      pos.addVectors(newDir, this.shockwave.position);
+      this.shockwave.lookAt(pos);
 
       this.add(this.shockwave);
     }
