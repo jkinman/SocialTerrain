@@ -11,6 +11,7 @@ import config from "config";
 import openSocket from "socket.io-client";
 import BeaconPlanar from "./BeaconPlanar";
 import TreeObj from '../../static/3dAssets/LowTree/Tree low.obj';
+import { Object3D } from "three";
 // import TreeMaterialFile from '../../static/3dAssets/LowTree/Tree low.mtl';
 
 let TWEEN = require("tween.js");
@@ -46,7 +47,7 @@ const euler = new THREE.Euler();
 const q0 = new THREE.Quaternion();
 const q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
 
-const CRAWL_SPEED = 0.04;
+const CRAWL_SPEED = 0.0;
 const CAMERA_ANIMATION_DELAY = 3000;
 const CAMERA_ROTATE_TIME = 3000;
 const TEXTURE_SIZE = 512;
@@ -54,6 +55,8 @@ const PRIMARY = 0x666666;
 // const PRIMARY = 0x53BDFD;
 const GREEN = 0x1ec503;
 const BACKGROUND_MESH = false;
+const FOG_COLOUR = 0x000000;
+
 let onRenderFcts = [];
 
 class ProceduralLandscapeComponent extends BaseSceneComponent {
@@ -67,33 +70,6 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.clock = new THREE.Clock();
   }
 
-  componentDidMount() {
-    super.componentDidMount();
-    document
-      .getElementById("proceduralLandscape-component")
-      .appendChild(this.renderer.domElement);
-    this.buildScene();
-
-    var geometry = new THREE.TorusGeometry(6, 3, 16, 10);
-    var material = new THREE.MeshBasicMaterial({
-      color: 0xffff00,
-      side: THREE.DoubleSide,
-    });
-    // this.torus = new THREE.Mesh( geometry, material );
-    // this.scene.add( this.torus );
-
-    // this.controls = new THREE.FlyControls( this.camera );
-    this.controls = new THREE.FlyControls( this.cameraPivot );
-    // this.controls = new THREE.FlyControls( torus );
-    this.controls.movementSpeed = 0.3;
-    this.controls.domElement = document.getElementById( 'proceduralLandscape-component' );
-    this.controls.rollSpeed = Math.PI / 24;
-    this.controls.autoForward = true;
-    this.controls.dragToLook = true;
-
-    this.mounted = true;
-  }
-
   renderLoop(time) {
     super.renderLoop(time);
     if (!this.mounted) return;
@@ -102,17 +78,34 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.controls.update( delta );
     
     // creep the camera gimble along
-    // this.cameraPivot.position.z -= CRAWL_SPEED;
+    this.cameraPivot.position.z -= CRAWL_SPEED;
 
     if( this.heightMap && this.groundMesh && this.cameraPivot ) {
       let cameraPivotPosition	= this.cameraPivot.position;
-      cameraPivotPosition.y	= 2 + THREEx.Terrain.planeToHeightMapCoords(
+      cameraPivotPosition.y	= 5 + THREEx.Terrain.planeToHeightMapCoords(
         this.heightMap, this.groundMesh, cameraPivotPosition.x, cameraPivotPosition.z);
     }
     
     if (deviceOrientation){
       this.cameraRotate(deviceOrientation);
     }
+  }
+
+  componentDidMount() {
+    super.componentDidMount();
+    document
+      .getElementById("proceduralLandscape-component")
+      .appendChild(this.renderer.domElement);
+    this.buildScene();
+
+    this.controls = new THREE.FlyControls( this.cameraPivot );
+    this.controls.movementSpeed = 2;
+    this.controls.domElement = document.getElementById( 'proceduralLandscape-component' );
+    this.controls.rollSpeed = Math.PI / 24;
+    this.controls.autoForward = true;
+    this.controls.dragToLook = true;
+
+    this.mounted = true;
   }
 
   componentWillReceiveProps(nextProps) {
@@ -189,75 +182,51 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
 
     // let materialLoader = new THREE.MTLLoader( );
     // let material = materialLoader.load( TreeMaterialFile );
-    this.trees.add( obj3dTree);
-    this.scene.add( obj3dTree);
-    let material = new THREE.MeshBasicMaterial({
+
+    this.obj3dTree = obj3dTree;
+
+    setInterval( (obj) => {
+    let newObj;
+      newObj = this.cloneLoadedOBJ( this.obj3dTree.clone(), Math.random() / 5 + 0.01 )
+      // this.trees.add(newObj)
+      this.scene.add(newObj)
+      newObj.position.set(this.getRandomInt(200),0,this.getRandomInt(200))  
+    }, 3000)
+
+  }
+
+   getRandomInt(max) {
+    return (Math.floor(Math.random() * Math.floor(max))) - max /2;
+  }
+
+  cloneLoadedOBJ (obj=null, scale=1) {
+    let treeMaterial = new THREE.MeshBasicMaterial({
       wireframe: false,
       color: 0x229922,      
       side: THREE.DoubleSide,
     });
 
-    // obj3dTree.traverse(( child ) => {
-    //   if ( child instanceof THREE.Mesh ) {
-    //     child.material = material;
-    //   }
-    // });
+    let treeCopy = new THREE.Object3D()
+    treeCopy.name = `treecopy-${this.scene.children.length}`
+    obj.traverse(( child ) => {
+      if ( child instanceof THREE.Mesh ) {
+        let newMesh = child.clone(true)
+        newMesh.position.set(0,0,0)
+        newMesh.scale.set(scale,scale,scale)
+        newMesh.material = treeMaterial;
+        treeCopy.add( newMesh) 
+      }
+    });
 
-    obj3dTree.scale.set( 0.1, 0.1, 0.1);
-    this.obj3dTree = obj3dTree.clone(true);
-    
-    let cameraPivotPosition	= this.cameraPivot.position;
-
-    let n = 100;
-    while (n < 10) {
-      n++;
-      let treeCopy = new THREE.Group();
-      treeCopy = this.obj3dTree.clone(true);
-      this.trees.add( treeCopy );
-      treeCopy.children = obj3dTree.children.slice();
-      
-      treeCopy.traverse(( child ) => {
-        if ( child instanceof THREE.Mesh ) {
-          child.material = material;
-        }
-      });
-
-      let randomScale = Math.random() * 0.5;
-      treeCopy.scale.set( randomScale, randomScale, randomScale);
-      let randomPos = {
-        x:(Math.random() * 1024)-512, 
-        y:0,
-        z:(Math.random() * 1024)-512
-      };
-
-      // console.log(randomPos)
-
-    //   try{
-    //     randomPos.y	= THREEx.Terrain.planeToHeightMapCoords(
-    //     this.heightMap, 
-    //     this.groundMesh, 
-    //     randomPos.x, 
-    //     randomPos.z
-    //   );
-    // } catch(error) {
-    //   console.log(error)
-    // }
-
-      treeCopy.position.set(randomPos.x, randomPos.y, randomPos.z);
-
-    }
-    // obj3dTree.position.set(0,0,0);
-    obj3dTree.position.set(this.fakeCoords(this.cameraPivot));
-    this.camera.lookAt( obj3dTree.position);
-
+    console.log(treeCopy)
+    return treeCopy;
   }
 
   buildScene() {
     super.buildScene();
     let loader = new THREE.OBJLoader();
-
-    this.trees = new THREE.Group();
-    this.scene.add(this.trees);
+    this.trees = new THREE.Object3D();
+    // this.scene.add(this.trees);
 
     //add the marker group
     // world objects group
@@ -267,10 +236,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.globalEvents = new THREE.Object3D();
     this.worldgroup.add(this.globalEvents);
 
-    this.camera.position.x = 20;
-    this.camera.position.y = 20;
-    this.camera.position.z = 20;
-    this.camera.rotation.reorder("YXZ");
+    
     if (this.datgui) {
       this.datgui.add(this.camera.position, "x", -200, 200);
       this.datgui.add(this.camera.position, "y", -200, 200);
@@ -286,7 +252,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     );
     this.scene.add(this.ambientLight);
 
-    this.scene.fog = new THREE.Fog( 0x000, 5, 50);
+    this.scene.fog = new THREE.Fog( FOG_COLOUR, 5, 50);
     var light = new THREE.AmbientLight(0x202020);
     // this.scene.add( light )
     var light = new THREE.DirectionalLight("white", 5);
@@ -297,12 +263,6 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.scene.add(light);
 
     loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
-    loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
-    loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
-    loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
-    loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
-    loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
-
 
     this.heightMap = THREEx.Terrain.allocateHeightMap(512, 512);
     THREEx.Terrain.simplexHeightMap(this.heightMap);
@@ -318,7 +278,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.scene.add(mesh);
     mesh.lookAt(new THREE.Vector3(0, 1, 0));
 
-    mesh.scale.y = 3.5;
+    mesh.scale.y = 3;
     mesh.scale.x = 3;
     mesh.scale.z = 0.1;
     mesh.scale.multiplyScalar(100);
@@ -335,13 +295,16 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     // })
     var lastTimeMsec = null;
 
+    // for linking with device pos
+    this.camera.rotation.reorder("YXZ");
+
     this.cameraPivot = new THREE.Object3D();
     this.cameraPivot.add(this.camera);
-    this.cameraPivot.position.set(0, 0, 0);
     this.scene.add(this.cameraPivot);
-
+    
+    this.cameraPivot.position.set(0, 0, 0);
     this.camera.position.set(0, 0, 0);
-    this.camera.lookAt(mesh.position);
+
   }
 
   render() {
