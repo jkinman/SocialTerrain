@@ -1,6 +1,7 @@
 "use strict";
 
 import * as THREE from "three";
+import TwitterLogo from '../../images/twitter_PNG28.png';
 const CanvasTextWrapper = require('canvas-text-wrapper').CanvasTextWrapper;
 
 window.THREE = THREE;
@@ -37,6 +38,7 @@ class Beacon extends THREE.Object3D {
   activate() {
     this.alive = true;
     this.fadeIn();
+    this.popIn();
     this.kickoffFX();
     if (this.lifeSpan > 0) {
       setTimeout(this.fadeOut.bind(this), this.lifeSpan);
@@ -117,20 +119,29 @@ class Beacon extends THREE.Object3D {
     context.fillStyle = "white";
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-
-    // draw circle
-    if( false ){
-      let radius = this.OVERLAY_HEIGHT / 2;
-      context.strokeStyle = '#000000';
-      context.lineWidth = 0;
-      context.fillStyle = '#ff0000';
-      context.beginPath();
-      context.arc( this.OVERLAY_HEIGHT/2, this.OVERLAY_HEIGHT/2, radius, 0, 2*Math.PI, false );
-      context.stroke();
-      context.closePath();
-      context.fill();
+    if (message.backgroundUrl && false) {
+      let img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.onload = () => {
+        context.drawImage(
+          img,
+          0,
+          0,
+          OVERLAY_WIDTH,
+          OVERLAY_HEIGHT,
+        );
+      };
+      img.src = message.backgroundUrl;
     }
-  
+
+    let twitterImage = new Image();
+    twitterImage.src = TwitterLogo;
+    context.drawImage(twitterImage, 
+      OVERLAY_WIDTH - TWITTER_PROFILE_WIDTH * 1.3, 
+      OVERLAY_HEIGHT / 4, 
+      TWITTER_PROFILE_WIDTH*2,
+      TWITTER_PROFILE_WIDTH*2,
+    );
 
     // FLAG POLE
     if( message.flagpole && false){
@@ -176,7 +187,7 @@ class Beacon extends THREE.Object3D {
       };
       img.src = message.imageUrl;
     }
-
+    
     // CORNER FLAGS
     if( false ){
       context.fillStyle = "rgba(0,0,0,1)";      
@@ -258,6 +269,30 @@ class Beacon extends THREE.Object3D {
     });
   }
 
+  popIn() {
+    let obj;
+    this.children.map(e => {
+      if (e.material || e.materials) {
+        obj = e;
+        let size = 30;
+        if (this.event.impact) {
+          size = 3 * this.event.impact;
+        }
+  
+        e.scale.set(1,1,1);
+        let anim = new TWEEN.Tween(e.scale)
+          .easing(TWEEN.Easing.Elastic.Out)
+          .to ({ y: size, x: size*2, z: 1 }, FADE_OUT_TIME)
+          // .onUpdate( () => {
+          //   // debugger;
+          //   obj.scale.x = this.scale.x;
+          //   obj.scale.y = this.scale.y / 2;
+          // })
+          .start();
+      }
+    })
+  }
+
   fadeOut() {
     let obj;
     this.children.map(e => {
@@ -328,7 +363,7 @@ class Beacon extends THREE.Object3D {
       this.beacon.position.z = position.z;
     }
 
-    if (event.shockwave ) {
+    if ( event.shockwave ) {
       let geo = new THREE.CircleGeometry(1, 32);
       // let geo = new THREE.CylinderGeometry( 1, 1, 3, 32 );
       

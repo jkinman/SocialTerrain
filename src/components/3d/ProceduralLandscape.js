@@ -157,11 +157,14 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
 
     const beacon = new BeaconPlanar(
       {...event, 
-        shockwave: true, 
+        impact: 1.5,
+        shockwave: false, 
         title: event.handle, 
         subtitle: event.text, 
         imageUrl: event.profile,
-        impact: 1.5},
+        backgroundUrl: event.user.profile_background_image_url,
+        likes: event.entities.favorite_count + event.entities.retweet_count,
+      },
       position,
       this.shaderRenderer.texture,
       20000
