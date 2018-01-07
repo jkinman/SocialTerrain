@@ -16,19 +16,6 @@ import { Object3D } from "three";
 
 let TWEEN = require("tween.js");
 
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/loaders/MTLLoader.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/loaders/OBJLoader.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/EffectComposer.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/RenderPass.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/ShaderPass.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/MaskPass.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/SSAOPass.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/DotScreenShader.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/CopyShader.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/RGBShiftShader.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/SSAOShader.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/controls/FlyControls.js");
-
 let deviceOrientation;
 let screenOrientation = 0;
 
@@ -41,6 +28,7 @@ socket.on("screenrotation", orientation => {
   screenOrientation = orientation.direction;
 });
 
+
 // rotation consts
 const zee = new THREE.Vector3(0, 0, 1);
 const euler = new THREE.Euler();
@@ -50,30 +38,28 @@ const q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/
 const CRAWL_SPEED = 0.0;
 const CAMERA_ANIMATION_DELAY = 3000;
 const CAMERA_ROTATE_TIME = 3000;
-const TEXTURE_SIZE = 512;
+const TEXTURE_SIZE = 1024;
 const PRIMARY = 0x666666;
 // const PRIMARY = 0x53BDFD;
 const GREEN = 0x1ec503;
 const BACKGROUND_MESH = false;
 const FOG_COLOUR = 0x000000;
 
-let onRenderFcts = [];
-
 class ProceduralLandscapeComponent extends BaseSceneComponent {
   constructor(props, context) {
     super(props, context);
+    this.Childclock = new THREE.Clock();
     window.addEventListener("resize", this.resize.bind(this), false);
     if (this.datgui) {
       this.datgui = this.props.datgui.addFolder("landscape");
-    }
-    this.start = Date.now();
-    this.clock = new THREE.Clock();
+    } 
   }
 
-  renderLoop(time) {
-    super.renderLoop(time);
+  renderLoop() {
     if (!this.mounted) return;
-    let delta = this.clock.getDelta();
+    super.renderLoop();    
+
+    let delta = this.Childclock.getDelta();
     TWEEN.update();
     this.controls.update( delta );
     
@@ -105,7 +91,13 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.controls.autoForward = false;
     this.controls.dragToLook = true;
 
+    socket.on("remoteMessage", data => {
+      this.remoteEventHandler(data)
+    });
+
     this.mounted = true;
+      // THIS TURNS ON POST PROCESSING
+      this.startPostProcessing();
   }
 
   componentWillReceiveProps(nextProps) {
@@ -114,20 +106,16 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
 
   cameraRotate(obj) {
     this.alphaOffset = 0;
-    var alpha = obj.alpha
-      ? THREE.Math.degToRad(obj.alpha) + this.alphaOffset
-      : 0; // Z
-    var beta = obj.beta ? THREE.Math.degToRad(obj.beta) : 0; // X'
-    var gamma = obj.gamma ? THREE.Math.degToRad(obj.gamma) : 0; // Y''
+    let alpha = obj.alpha ? THREE.Math.degToRad(obj.alpha) + this.alphaOffset : 0; // Z
+    let beta = obj.beta ? THREE.Math.degToRad(obj.beta) : 0; // X'
+    let gamma = obj.gamma ? THREE.Math.degToRad(obj.gamma) : 0; // Y''
+    // I LUCKED OUT AND EVERYTHING WORKS IF I MULTIPLY BEAT BY -1
+    beta = -beta;
 
     var orient = screenOrientation ? THREE.Math.degToRad(screenOrientation) : 0; // O
-    this.setObjectQuaternion(
-      this.camera.quaternion,
-      alpha,
-      beta,
-      gamma,
-      orient
-    );
+
+    this.setObjectQuaternion(this.gimble.quaternion, alpha, beta, gamma, orient);
+    this.setObjectQuaternion(this.camera.quaternion, alpha, beta, gamma, orient);
   }
 
   setObjectQuaternion(quaternion, alpha, beta, gamma, orient) {
@@ -158,7 +146,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     const beacon = new BeaconPlanar(
       {...event, 
         impact: 1.5,
-        shockwave: false, 
+        shockwave: true, 
         title: event.handle, 
         subtitle: event.text, 
         imageUrl: event.profile,
@@ -172,12 +160,6 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     
     this.globalEvents.add(beacon);
     beacon.activate();
-
-    // let newObj;
-    // newObj = this.cloneLoadedOBJ( this.obj3dTree.clone(), Math.random() / 5 + 0.01 )
-    // newObj.position.set(position.x, position.y, position.z)
-    // this.trees.add(newObj)
-    // this.scene.add(newObj)
   
     // this.camera.lookAt(position.x, position.y, position.z)
   }
@@ -190,6 +172,15 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     }
   }
 
+  remoteEventHandler( data ) {
+    const position = this.fakeCoords(this.cameraPivot);
+    
+    let newObj;
+    newObj = this.cloneLoadedOBJ( this.obj3dTree.clone(), Math.random() / 5 + 0.01 )
+    newObj.position.set(position.x, position.y, position.z)
+    this.trees.add(newObj)
+    this.scene.add(newObj)
+  }
 
   handleTrees( obj3dTree ){
     // let textureLoader = new THREE.TextureLoader( );
@@ -244,45 +235,39 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
 
   buildScene() {
     super.buildScene();
-    let loader = new THREE.OBJLoader();
     this.trees = new THREE.Object3D();
-    // this.scene.add(this.trees);
 
-    //add the marker group
-    // world objects group
+    // FOG IS KEY TO SELLING THE INFINATE TERRAIN ILLUSION
+    // this.scene.fog = new THREE.Fog( FOG_COLOUR, 5, 50);
+
+
     this.worldgroup = new THREE.Object3D();
     this.scene.add(this.worldgroup);
 
     this.globalEvents = new THREE.Object3D();
     this.worldgroup.add(this.globalEvents);
-
     
-    if (this.datgui) {
-      this.datgui.add(this.camera.position, "x", -200, 200);
-      this.datgui.add(this.camera.position, "y", -200, 200);
-      this.datgui.add(this.camera.position, "z", -200, 200);
-      this.datgui.add(this.camera, "fov", 1, 100).onFinishChange(val => {
-        this.resize();
-      });
-    }
+    // if (this.datgui) {
+    //   this.datgui.add(this.camera.position, "x", -200, 200);
+    //   this.datgui.add(this.camera.position, "y", -200, 200);
+    //   this.datgui.add(this.camera.position, "z", -200, 200);
+    //   this.datgui.add(this.camera, "fov", 1, 100).onFinishChange(val => {
+    //     this.resize();
+    //   });
+    // }
 
     this.ambientLight = new THREE.AmbientLight(
       new THREE.Color("rgb(255, 255, 255)"),
-      0.1
+      0.08
     );
     this.scene.add(this.ambientLight);
 
-    // this.scene.fog = new THREE.Fog( FOG_COLOUR, 5, 50);
-    var light = new THREE.AmbientLight(0x202020);
-    // this.scene.add( light )
     var light = new THREE.DirectionalLight("white", 5);
     light.position.set(0.5, 0.0, 2);
     this.scene.add(light);
     var light = new THREE.DirectionalLight("white", 0.75 * 2);
     light.position.set(-0.5, -0.5, -2);
     this.scene.add(light);
-
-    loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
 
     this.heightMap = THREEx.Terrain.allocateHeightMap(512, 512);
     THREEx.Terrain.simplexHeightMap(this.heightMap);
@@ -294,7 +279,12 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
       wireframe: this.props.meshTerrain,
       color: this.props.terrainColour
     });
-    var mesh = new THREE.Mesh(geometry, material);
+
+    let lambertGround = new THREE.MeshLambertMaterial( {
+      wireframe: this.props.meshTerrain,
+      color: this.props.terrainColour
+    } )
+    var mesh = new THREE.Mesh(geometry, lambertGround);
     this.scene.add(mesh);
     mesh.lookAt(new THREE.Vector3(0, 1, 0));
 
@@ -307,13 +297,18 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.groundGeo = geometry;
     this.groundMesh = mesh;
     
-    // onRenderFcts.push(function(delta, now){
-    //   mesh.rotation.z += 0.2 * delta;
-    // })
-    // onRenderFcts.push(function(){
-    //   this.renderer.render( this.scene, this.camera );
-    // })
     var lastTimeMsec = null;
+    
+    this.gimble = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(2, 0), 
+      new THREE.MeshLambertMaterial( {color: 0x999999} )
+    )
+    this.gimble.rotation.reorder("YXZ");
+    this.gimble.scale.set(0.3,0.3,0.3)
+    var vec = new THREE.Vector3( -4, -2, -10 );
+    vec.applyQuaternion( this.camera.quaternion );
+    this.gimble.position.copy( vec );
+    this.camera.add(this.gimble)
 
     // for linking with device pos
     this.camera.rotation.reorder("YXZ");
@@ -324,9 +319,13 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     
     this.cameraPivot.position.set(0, 0, 0);
     this.camera.position.z = 100;
-    this.camera.position.y = 50;
+    this.camera.position.y = 500;
     this.camera.position.set(0,0,0);
     this.camera.lookAt(0,0,0)
+    this.gimble.lookAt(this.camera.position)
+
+    let loader = new THREE.OBJLoader();
+    loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
 
   }
 

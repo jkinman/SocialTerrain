@@ -3,13 +3,33 @@
 import React from 'react';
 import * as THREE from 'three'
 let TWEEN = require('tween.js');
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/loaders/MTLLoader.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/loaders/OBJLoader.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/EffectComposer.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/RenderPass.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/ShaderPass.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/MaskPass.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/SSAOPass.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/GlitchPass.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/BloomPass.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/FilmPass.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/BokehPass.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/DotScreenPass.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/ConvolutionShader.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/DotScreenShader.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/CopyShader.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/RGBShiftShader.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/SSAOShader.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/FilmShader.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/BokehShader.js");
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/controls/FlyControls.js");
 
 
 const CAMERA_ANIMATION_DELAY = 3000;
 const CAMERA_ROTATE_TIME = 3000;
-const TEXTURE_SIZE = 512;
+const TEXTURE_SIZE = 1024;
 const TEXTURE_HEIGHT = TEXTURE_SIZE;
-const TEXTURE_WIDTH = TEXTURE_SIZE * 2;
+const TEXTURE_WIDTH = TEXTURE_SIZE;
 const PRIMARY = 0x53BDFD;
 const GREEN = 0x1ec503;
 const BACKGROUND_MESH = false;
@@ -17,18 +37,19 @@ const BACKGROUND_MESH = false;
 let testScene = new THREE.Scene();
 let textureCamera;
 let shaderScene;
-let renderer, scene;
-
-let depthMaterial, effectComposer, depthRenderTarget, ssaoPass;
+let renderer, scene, camera;
+let depthMaterial;
+let effectComposer;
+let depthRenderTarget;
 let group;
 let depthScale = 1.0;
-let postprocessing = { enabled : true, renderMode: 0 };
 
 class BaseSceneComponent extends React.Component {
 
   constructor(props, context) {
     super(props, context);
-
+    this.postprocessing = false;
+    this.baseClock = new THREE.Clock();
     // this.datgui = props.datgui.addFolder( 'base scene' );
 
   }
@@ -36,22 +57,16 @@ class BaseSceneComponent extends React.Component {
   // 'delegate' functions
   showGlobalEvent(event) {
   }
-
   addBeacon( position, flagpolePosition, event) {
   }
-
   startAmbientAnimation() {
   }
-
   moveToBottom( cb ) {
   }
-
   moveToMiddle( cb, paramPos ) {
   }
-
   setVisionProperties( obj ){
   }
-
 
   startAmbientAnimation() {
     this.ambientAnimationOn = true;
@@ -59,8 +74,8 @@ class BaseSceneComponent extends React.Component {
   }
 
   doAmbientAnim() {
-    // this.camera.rotation.x += 0.0009;
-    this.camera.rotation.y += 0.001;
+    // camera.rotation.x += 0.0009;
+    camera.rotation.y += 0.001;
     if( this.ambientAnimationOn ){
       requestAnimationFrame( this.doAmbientAnim.bind( this ) );
     }
@@ -68,6 +83,8 @@ class BaseSceneComponent extends React.Component {
 
   componentDidMount( preMadeCamera = false){
     // setup rederer and add to DOM
+    this.mounted = true;
+
     renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
@@ -76,7 +93,6 @@ class BaseSceneComponent extends React.Component {
     });
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
-
 
     // setup off screen graphics buffer
     this.shaderRenderer = new THREE.WebGLRenderTarget( TEXTURE_WIDTH, TEXTURE_HEIGHT, {
@@ -90,58 +106,51 @@ class BaseSceneComponent extends React.Component {
           format: THREE.RGBAFormat,
     } );
     this.shaderRenderer.setSize( TEXTURE_WIDTH, TEXTURE_HEIGHT);
-
-    textureCamera = new THREE.OrthographicCamera(TEXTURE_WIDTH / - 2,TEXTURE_WIDTH / 2,TEXTURE_HEIGHT / 2,TEXTURE_HEIGHT / - 2, -1000, 100000 );
+    textureCamera = new THREE.OrthographicCamera(TEXTURE_WIDTH / - 2, TEXTURE_WIDTH / 2, TEXTURE_HEIGHT / 2, TEXTURE_HEIGHT / - 2, -1000, 100000 );
     shaderScene = new THREE.Scene();
 
     if( preMadeCamera ){
-      this.camera = preMadeCamera;
+      camera = preMadeCamera;
     }
     else{
-      this.camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
-      this.camera.position.z = 750;
+      camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
     }
     scene = new THREE.Scene();
+    
     // scene.fog = new THREE.FogExp2( 0x000000, 0.005, 50 );
     // this.setupShaderBuffer();
 
-    requestAnimationFrame( this.renderLoop.bind( this ));
-    this.mounted = true;
+    // if( this.datgui ){
+    //   this.datgui.add( camera.position, 'x', -200, 200 )
+    //   .onFinishChange( ( val ) => {
+    //     camera.position.x = val;
+    //   });
+    //   this.datgui.add( camera.position, 'y', -200, 200 )
+    //   .onFinishChange( ( val ) => {
+    //     camera.position.y = val;
+    //   });
+    //   this.datgui.add( camera.position, 'z', -200, 200 )
+    //   .onFinishChange( ( val ) => {
+    //     camera.position.z = val;
+    //   });
+    // }
 
-    if( this.datgui ){
-      this.datgui.add( this.camera.position, 'x', -200, 200 )
-      .onFinishChange( ( val ) => {
-        this.camera.position.x = val;
-      });
-      this.datgui.add( this.camera.position, 'y', -200, 200 )
-      .onFinishChange( ( val ) => {
-        this.camera.position.y = val;
-      });
-      this.datgui.add( this.camera.position, 'z', -200, 200 )
-      .onFinishChange( ( val ) => {
-        this.camera.position.z = val;
-      });
-    }
+    requestAnimationFrame( this.renderLoop.bind( this ));
 
   }
 
-  renderLoop( time ) {
+  renderLoop( ) {
     if( !this.mounted ) return;
-    requestAnimationFrame( this.renderLoop.bind( this ) );
-    TWEEN.update();
-    if( this.postprocessing ){
-      renderer.render( shaderScene, textureCamera, this.shaderRenderer );
-      // Render depth into depthRenderTarget
-      scene.overrideMaterial = depthMaterial;
-      renderer.render( scene, this.camera, depthRenderTarget, true );
+    let delta = this.baseClock.getDelta();
 
-      // Render renderPass and SSAO shaderPass
-      scene.overrideMaterial = null;
-      effectComposer.render(time);
+    TWEEN.update();
+
+    renderer.render( shaderScene, textureCamera, this.shaderRenderer );
+    if( this.postprocessing ){
+      effectComposer.render(delta);
     }
     else{
-      renderer.render( shaderScene, textureCamera, this.shaderRenderer );
-      renderer.render( scene, this.camera );
+      renderer.render( scene, camera );
     }
 
     // update shader unis
@@ -149,6 +158,7 @@ class BaseSceneComponent extends React.Component {
       this.bufferShaderMaterial.uniforms[ 'iGlobalTime' ].value = (Date.now() - this.start) / 1000;
       this.bufferShaderMaterial.uniforms[ 't' ].value = (Date.now() - this.start) / 1000;
     }
+    requestAnimationFrame( this.renderLoop.bind( this ) );
   }
 
 
@@ -165,9 +175,7 @@ class BaseSceneComponent extends React.Component {
 
     loader.load( filepath,
       ( obj ) => {
-
         if( startAnimations ){
-
         obj.scene.traverse( function ( child ) {
     			if ( child instanceof THREE.SkinnedMesh ) {
     				var animation = new THREE.Animation( child, child.geometry.animation  );
@@ -175,7 +183,6 @@ class BaseSceneComponent extends React.Component {
     			}
     		});
         }
-
         if( cb ){
           cb.call( this, obj.scene );
         }
@@ -183,71 +190,39 @@ class BaseSceneComponent extends React.Component {
     );
   }
 
-
-  initPostprocessing() {
+  startPostProcessing() {
     this.postprocessing = true;
-    // Setup render pass
-    let renderPass = new THREE.RenderPass( scene, this.camera );
 
-    // Setup depth pass
-    depthMaterial = new THREE.MeshDepthMaterial();
-    depthMaterial.depthPacking = THREE.RGBADepthPacking;
-    depthMaterial.blending = THREE.NoBlending;
-
-    let pars = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter };
-    depthRenderTarget = new THREE.WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
-
-    // Setup SSAO pass
-    ssaoPass = new THREE.ShaderPass( THREE.SSAOShader );
-    ssaoPass.renderToScreen = true;
-    ssaoPass.uniforms[ "tDiffuse" ].value //will be set by ShaderPass
-    ssaoPass.uniforms[ "tDepth" ].value = depthRenderTarget.texture;
-    ssaoPass.uniforms[ 'size' ].value.set( window.innerWidth, window.innerHeight );
-    ssaoPass.uniforms[ 'cameraNear' ].value = this.camera.near;
-    ssaoPass.uniforms[ 'cameraFar' ].value = this.camera.far;
-    ssaoPass.uniforms[ 'onlyAO' ].value = ( false );
-    ssaoPass.uniforms[ 'aoClamp' ].value = 0.3;
-    ssaoPass.uniforms[ 'lumInfluence' ].value = 0.5;
-
-    // do a BloomPass
-    // let bloomPass = new THREE.BloomPass();
-    let bloomPass = new THREE.BloomPass(1.5, 25, 4, 512);
-    // bloomPass.renderToScreen = true;
-    // halftone mask
-    let dotScreenPass = new THREE.DotScreenPass();
-
-    // Add pass to effect composer
     effectComposer = new THREE.EffectComposer( renderer );
-    effectComposer.addPass( renderPass );
+    let renderPass = new THREE.RenderPass( scene, camera );
 
-    // effectComposer.addPass( bloomPass );
-    effectComposer.addPass( dotScreenPass );
-    effectComposer.addPass( ssaoPass );
+
+    let bloomPass = new THREE.BloomPass( 1, 25, 4.0, 256 );
+    let dotScreenPass = new THREE.DotScreenPass(new THREE.Vector2( 0, 0 ), 0.5, 0.8);
+    let copyPass = new THREE.ShaderPass( THREE.CopyShader );
+    let filmPass = new THREE.FilmPass(0.5, 0.045, 800, false);
+    let BokehPass = new THREE.BokehPass(scene, camera, {});
+
+    copyPass.renderToScreen = true;
+
+    effectComposer.addPass(renderPass)    
+    // effectComposer.addPass(bloomPass)
+    // effectComposer.addPass(dotScreenPass)
+    effectComposer.addPass(filmPass);
+    // effectComposer.addPass(BokehPass);
+    effectComposer.addPass(copyPass);
 
   }
 
   resize(){
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
-    this.camera.aspect = window.innerWidth / window.innerHeight;
-    this.camera.updateProjectionMatrix();
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
   }
 
   setVisionProperties( properties ) {
     this.visionPresets = properties;
-  }
-
-  get renderer() {
-    return renderer;
-  }
-  set renderer( val ) {
-    renderer = val;
-  }
-  get scene() {
-    return scene;
-  }
-  set scene( val ) {
-    scene = val;
   }
 
   buildScene(){
@@ -266,9 +241,9 @@ class BaseSceneComponent extends React.Component {
     });
     let boxGeometry2 = new THREE.PlaneGeometry( 100, 100, 2 );
     let mainBoxObject = new THREE.Mesh(boxGeometry2, boxMaterial );
-    this.camera.add( mainBoxObject );
+    camera.add( mainBoxObject );
     mainBoxObject.position.set( -80,0,-160 );
-    mainBoxObject.lookAt( this.camera.position );
+    mainBoxObject.lookAt( camera.position );
   }
 
   setupShaderBuffer() {
@@ -306,15 +281,15 @@ class BaseSceneComponent extends React.Component {
     light.position.set( 50, 50, 500 );
     scene.add( ambientLight );
     scene.add( light );
-    scene.add( this.camera );
+    scene.add( camera );
 
     var geometry = new THREE.BoxGeometry( 1, 1, 1 );
     var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
     var cube = new THREE.Mesh( geometry, material );
     scene.add( cube );
 
-    this.camera.position.set( 0, -150, 160 );
-    // this.camera.lookAt( 0,0,0 );
+    camera.position.set( 0, -150, 160 );
+    // camera.lookAt( 0,0,0 );
 
   }
   makeRandomSphere() {
@@ -323,8 +298,17 @@ class BaseSceneComponent extends React.Component {
     var material = new THREE.MeshLambertMaterial( {color: 0x1010ee} );
     var sphere = new THREE.Mesh( geometry, material );
     sphere.position.set( Math.random() * variance - variance/2, Math.random() * variance - variance/2, Math.random() * variance - variance/2 );
-
     return sphere;
+  }
+
+ get renderer() {
+    return renderer;
+  }
+  get scene() {
+    return scene;
+  }
+  get camera() {
+    return camera;
   }
 
   render() {

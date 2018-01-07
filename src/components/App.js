@@ -9,11 +9,6 @@ class AppComponent extends React.Component {
     return (
       <div>
         <Scene />
-        <ul>
-        {this.props.social.tweets.map((item, i) => (
-        <li key={i}>{item.text}</li>
-        ))}
-        </ul>
       </div>
     );
   }
