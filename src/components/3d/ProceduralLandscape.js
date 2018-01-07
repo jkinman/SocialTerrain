@@ -142,7 +142,6 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     position.y	= 1 + THREEx.Terrain.planeToHeightMapCoords(
       this.heightMap, this.groundMesh, cameraPivotPosition.x, cameraPivotPosition.z);
 
-
     const beacon = new BeaconPlanar(
       {...event, 
         impact: 1.5,
@@ -238,8 +237,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.trees = new THREE.Object3D();
 
     // FOG IS KEY TO SELLING THE INFINATE TERRAIN ILLUSION
-    // this.scene.fog = new THREE.Fog( FOG_COLOUR, 5, 50);
-
+    this.scene.fog = new THREE.Fog( FOG_COLOUR, 5, 80);
 
     this.worldgroup = new THREE.Object3D();
     this.scene.add(this.worldgroup);
@@ -258,7 +256,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
 
     this.ambientLight = new THREE.AmbientLight(
       new THREE.Color("rgb(255, 255, 255)"),
-      0.08
+      0.1
     );
     this.scene.add(this.ambientLight);
 
@@ -300,11 +298,14 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     var lastTimeMsec = null;
     
     this.gimble = new THREE.Mesh(
-      new THREE.IcosahedronGeometry(2, 0), 
+      new THREE.BoxGeometry( 4, 8, 1 ), 
+      // new THREE.IcosahedronGeometry(2, 0), 
       new THREE.MeshLambertMaterial( {color: 0x999999} )
     )
+    this.gimble.renderOrder = 999;
+    this.gimble.onBeforeRender = ( renderer ) => {renderer.clearDepth()};
     this.gimble.rotation.reorder("YXZ");
-    this.gimble.scale.set(0.3,0.3,0.3)
+    this.gimble.scale.set(0.2,0.2,0.2)
     var vec = new THREE.Vector3( -4, -2, -10 );
     vec.applyQuaternion( this.camera.quaternion );
     this.gimble.position.copy( vec );

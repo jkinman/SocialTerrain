@@ -201,7 +201,7 @@ class BaseSceneComponent extends React.Component {
     let dotScreenPass = new THREE.DotScreenPass(new THREE.Vector2( 0, 0 ), 0.5, 0.8);
     let copyPass = new THREE.ShaderPass( THREE.CopyShader );
     let filmPass = new THREE.FilmPass(0.5, 0.045, 800, false);
-    let BokehPass = new THREE.BokehPass(scene, camera, {});
+    let BokehPass = new THREE.BokehPass(scene, camera, {focus: 1.0, aperture: 0.0025, maxblur: 4.0});
 
     copyPass.renderToScreen = true;
 
