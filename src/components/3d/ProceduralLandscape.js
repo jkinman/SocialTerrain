@@ -52,41 +52,41 @@ const FOG_COLOUR = 0x000000;
 
 class ProceduralLandscapeComponent extends BaseSceneComponent {
   constructor(props, context) {
-    super(props, context, {showStats: true});
+    super(props, context, {showStats: true, controls: 'orbit'});
     this.Childclock = new THREE.Clock();
     this.loader = new THREE.OBJLoader();
     window.addEventListener("resize", this.resize.bind(this), false);
     if (this.datgui) {
       this.datgui = this.props.datgui.addFolder("landscape");
     } 
-    
   }
 
   renderLoop() {
     if (!this.mounted) return;
     let delta = this.Childclock.getDelta();
 
-    if( this.terrainTreadmill ) this.terrainTreadmill.render( delta );
-
-    super.renderLoop();    
-
-    TWEEN.update();
-    if( this.controls ) this.controls.update( delta );
     
-    if( this.cameraPivot ) {
-      // creep the camera gimble along
-      this.cameraPivot.position.z -= CRAWL_SPEED;
-  
-      if( this.heightMap && this.groundMesh  ) {
-        let cameraPivotPosition	= this.cameraPivot.position;
-        cameraPivotPosition.y	= 5 + THREEx.Terrain.planeToHeightMapCoords(
-          this.heightMap, this.groundMesh, cameraPivotPosition.x, cameraPivotPosition.z);
-      }  
-    }
-        
-    if (deviceOrientation){
-      this.cameraRotate(deviceOrientation);
-    }
+    TWEEN.update();
+    // if( this.controls ) this.controls.update( delta );
+    
+    // if( this.cameraPivot ) {
+      //   // creep the camera gimble along
+      //   this.cameraPivot.position.z -= CRAWL_SPEED;
+      
+      //   if( this.heightMap && this.groundMesh  ) {
+        //     let cameraPivotPosition	= this.cameraPivot.position;
+        //     cameraPivotPosition.y	= 5 + THREEx.Terrain.planeToHeightMapCoords(
+          //       this.heightMap, this.groundMesh, cameraPivotPosition.x, cameraPivotPosition.z);
+          //   }  
+          // }
+          
+          // if (deviceOrientation){
+            //   this.cameraRotate(deviceOrientation);
+            // }
+            
+    if( this.terrainTreadmill ) this.terrainTreadmill.render( this.camera, this.scene );
+    super.renderLoop( );
+    
   }
 
   componentDidMount() {
@@ -94,11 +94,14 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     document
       .getElementById("proceduralLandscape-component")
       .appendChild(this.renderer.domElement);
+
     this.buildScene();
     // this.createTHREEXTerrain();
     this.terrainTreadmill = new NoiseGroundTreadmill(this.camera, this.scene, this.renderer);
-    this.terrainTreadmill.init();
-    this.terrainTreadmill.sceneObectInit();
+    this.terrainTreadmill.init(this.camera, this.scene, this.renderer);
+    this.terrainTreadmill.sceneObectInit(this.camera, this.scene, this.renderer);
+    this.camera.position.set( -1200, 800, 1200 );
+
     // this.sceneObectInit();
     // this.addLightsAndFog();
 
@@ -121,6 +124,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
   }
 
   componentWillReceiveProps(nextProps) {
+    // TODO fix this
     // this.showGlobalEvent(nextProps.tweets[nextProps.tweets.length - 1]);
   }
 
@@ -324,9 +328,8 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     //     this.resize();
     //   });
     // }
-    
 
-    this.loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
+    // this.loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
 
   }
 

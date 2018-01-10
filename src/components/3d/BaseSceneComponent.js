@@ -26,6 +26,7 @@ require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/FilmShader.js");
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/BokehShader.js");
 
+require("imports-loader?THREE=three!../../externals/three.js/examples/js/controls/OrbitControls.js");
 
 const CAMERA_ANIMATION_DELAY = 3000;
 const CAMERA_ROTATE_TIME = 3000;
@@ -45,6 +46,7 @@ let effectComposer;
 let depthRenderTarget;
 let group;
 let depthScale = 1.0;
+let controls;
 
 class BaseSceneComponent extends React.Component {
 
@@ -55,7 +57,8 @@ class BaseSceneComponent extends React.Component {
     this.settings = settings ? this.settings = settings :
     {
       showStats: false,
-      datgui: false
+      datgui: false,
+      controls: 'orbit'
     };
     // this.datgui = props.datgui.addFolder( 'base scene' );
 
@@ -153,6 +156,16 @@ class BaseSceneComponent extends React.Component {
       .appendChild( this.stats.dom );
     }
     
+    if( this.settings.controls === 'orbit' ){
+      controls = new THREE.OrbitControls( this.camera );
+
+      controls.rotateSpeed = 1.0;
+      controls.zoomSpeed = 1.2;
+      controls.panSpeed = 0.8;
+  
+      controls.keys = [ 65, 83, 68 ];
+  
+    }
     requestAnimationFrame( this.renderLoop.bind( this ));
 
   }
