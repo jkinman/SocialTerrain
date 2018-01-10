@@ -1,14 +1,19 @@
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/NormalMapShader.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/ShaderTerrain.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/BufferGeometryUtils.js");
+import vertexShader from 'raw-loader!./shaders/vertexShader.txt';
+import fragmentShaderNoise from 'raw-loader!./shaders/fragmentShaderNoise.txt';
 
+import GrassLight from '../../../static/3dAssets/textures/terrain/grasslight-big.jpg';
+import GrassLightNM from '../../../static/3dAssets/textures/terrain/grasslight-big-nm.jpg';
+import BackgroundDetailed from '../../../static/3dAssets/textures/terrain/backgrounddetailed6.jpg';
+
+require("imports-loader?THREE=three!../../../externals/three.js/examples/js/shaders/NormalMapShader.js");
+require("imports-loader?THREE=three!../../../externals/three.js/examples/js/ShaderTerrain.js");
+require("imports-loader?THREE=three!../../../externals/three.js/examples/js/BufferGeometryUtils.js");
 
 let SCREEN_WIDTH = window.innerWidth;
 let SCREEN_HEIGHT = window.innerHeight;
 
-let renderer, container, stats;
 
-let camera, scene, controls;
+let camera, scene;
 let cameraOrtho, sceneRenderTarget;
 
 let uniformsNoise, uniformsNormal, uniformsTerrain,
@@ -26,21 +31,31 @@ let lightVal = 0, lightDir = 1;
 
 let clock = new THREE.Clock();
 
-let updateNoise = true;
+
 
 let animateTerrain = false;
 
 let mlib = {};
 
-init();
-animate();
 
-function init() {
+class NoiseTerrainTreadmillHelper {
+    constructor( camera, scene, renderer ) {
+        this.renderer = renderer;
+        this.camera = camera;
+        this.scene = scene;
+        this.updateNoise = false;
+    }
 
-    container = document.getElementById( 'container' );
+sceneObectInit() {
+    this.camera.position.set( -1200, 800, 1200 );
+    this.scene.background = new THREE.Color( 0x050505 );
+    this.scene.fog = new THREE.Fog( 0x050505, 2000, 4000 );
+
+}
+
+init() {
 
     // SCENE (RENDER TARGET)
-
     sceneRenderTarget = new THREE.Scene();
 
     cameraOrtho = new THREE.OrthographicCamera( SCREEN_WIDTH / - 2, SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_HEIGHT / - 2, -10000, 10000 );
@@ -49,35 +64,21 @@ function init() {
     sceneRenderTarget.add( cameraOrtho );
 
     // CAMERA
-
-    camera = new THREE.PerspectiveCamera( 40, SCREEN_WIDTH / SCREEN_HEIGHT, 2, 4000 );
-    camera.position.set( -1200, 800, 1200 );
-
-    controls = new THREE.OrbitControls( camera );
-
-    controls.rotateSpeed = 1.0;
-    controls.zoomSpeed = 1.2;
-    controls.panSpeed = 0.8;
-
-    controls.keys = [ 65, 83, 68 ];
+    // camera = new THREE.PerspectiveCamera( 40, SCREEN_WIDTH / SCREEN_HEIGHT, 2, 4000 );
+    // this.camera.position.set( -1200, 800, 1200 );
 
     // SCENE (FINAL)
-
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color( 0x050505 );
-    scene.fog = new THREE.Fog( 0x050505, 2000, 4000 );
-
     // LIGHTS
 
-    scene.add( new THREE.AmbientLight( 0x111111 ) );
+    this.scene.add( new THREE.AmbientLight( 0x111111 ) );
 
     directionalLight = new THREE.DirectionalLight( 0xffffff, 1.15 );
     directionalLight.position.set( 500, 2000, 0 );
-    scene.add( directionalLight );
+    this.scene.add( directionalLight );
 
     pointLight = new THREE.PointLight( 0xff4400, 1.5 );
     pointLight.position.set( 0, 0, 0 );
-    scene.add( pointLight );
+    this.scene.add( pointLight );
 
 
     // HEIGHT + NORMAL MAPS
@@ -107,7 +108,7 @@ function init() {
     uniformsNormal.resolution.value.set( rx, ry );
     uniformsNormal.heightMap.value = heightMap.texture;
 
-    let vertexShader = document.getElementById( 'vertexShader' ).textContent;
+    // let vertexShader = document.getElementById( 'vertexShader' ).textContent;
 
     // TEXTURES
 
@@ -117,11 +118,15 @@ function init() {
     let textureLoader = new THREE.TextureLoader( loadingManager );
 
     let specularMap = new THREE.WebGLRenderTarget( 2048, 2048, pars );
-    specularMap.texture.generateMipmaps = false;
+    specularMap.texture.generateMipmaps = false;    
+    
+    // let diffuseTexture1 = textureLoader.load( "textures/terrain/grasslight-big.jpg");
+    // let diffuseTexture2 = textureLoader.load( "textures/terrain/backgrounddetailed6.jpg" );
+    // let detailTexture = textureLoader.load( "textures/terrain/grasslight-big-nm.jpg" );
 
-    let diffuseTexture1 = textureLoader.load( "textures/terrain/grasslight-big.jpg");
-    let diffuseTexture2 = textureLoader.load( "textures/terrain/backgrounddetailed6.jpg" );
-    let detailTexture = textureLoader.load( "textures/terrain/grasslight-big-nm.jpg" );
+    let diffuseTexture1 = textureLoader.load( GrassLight );
+    let diffuseTexture2 = textureLoader.load( GrassLightNM );
+    let detailTexture = textureLoader.load( BackgroundDetailed );
 
     diffuseTexture1.wrapS = diffuseTexture1.wrapT = THREE.RepeatWrapping;
     diffuseTexture2.wrapS = diffuseTexture2.wrapT = THREE.RepeatWrapping;
@@ -158,7 +163,7 @@ function init() {
     uniformsTerrain[ 'uRepeatOverlay' ].value.set( 6, 6 );
 
     let params = [
-        [ 'heightmap', 	document.getElementById( 'fragmentShaderNoise' ).textContent, 	vertexShader, uniformsNoise, false ],
+        [ 'heightmap', 	fragmentShaderNoise, 	vertexShader, uniformsNoise, false ],
         [ 'normal', 	normalShader.fragmentShader,  normalShader.vertexShader, uniformsNormal, false ],
         [ 'terrain', 	terrainShader.fragmentShader, terrainShader.vertexShader, uniformsTerrain, true ]
      ];
@@ -195,33 +200,24 @@ function init() {
     terrain.position.set( 0, -125, 0 );
     terrain.rotation.x = -Math.PI / 2;
     terrain.visible = false;
-    scene.add( terrain );
+    this.scene.add( terrain );
 
     // RENDERER
-
-    renderer = new THREE.WebGLRenderer();
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
-    container.appendChild( renderer.domElement );
-
-    // STATS
-
-    stats = new Stats();
-    container.appendChild( stats.dom );
+    // renderer = new THREE.WebGLRenderer();
+    // renderer.setPixelRatio( window.devicePixelRatio );
+    // renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
+    // container.appendChild( renderer.domElement );
 
     // EVENTS
 
     onWindowResize();
-
     window.addEventListener( 'resize', onWindowResize, false );
-
     document.addEventListener( 'keydown', onKeyDown, false );
 
 }
 
-//
 
-function onWindowResize( event ) {
+ onWindowResize( event ) {
 
     SCREEN_WIDTH = window.innerWidth;
     SCREEN_HEIGHT = window.innerHeight;
@@ -233,9 +229,9 @@ function onWindowResize( event ) {
 
 }
 
-//
 
-function onKeyDown ( event ) {
+
+ onKeyDown ( event ) {
 
     switch( event.keyCode ) {
 
@@ -246,18 +242,9 @@ function onKeyDown ( event ) {
 
 }
 
-//
 
-function animate() {
 
-    requestAnimationFrame( animate );
-
-    render();
-    stats.update();
-
-}
-
-function render() {
+ render() {
 
     let delta = clock.getDelta();
 
@@ -271,15 +258,15 @@ function render() {
 
         let valNorm = ( lightVal - fLow ) / ( fHigh - fLow );
 
-        scene.background.setHSL( 0.1, 0.5, lightVal );
-        scene.fog.color.setHSL( 0.1, 0.5, lightVal );
+        this.scene.background.setHSL( 0.1, 0.5, lightVal );
+        this.scene.fog.color.setHSL( 0.1, 0.5, lightVal );
 
         directionalLight.intensity = THREE.Math.mapLinear( valNorm, 0, 1, 0.1, 1.15 );
         pointLight.intensity = THREE.Math.mapLinear( valNorm, 0, 1, 0.9, 1.5 );
 
         uniformsTerrain[ 'uNormalScale' ].value = THREE.Math.mapLinear( valNorm, 0, 1, 0.6, 3.5 );
 
-        if ( updateNoise ) {
+        if ( this.updateNoise ) {
 
             animDelta = THREE.Math.clamp( animDelta + 0.00075 * animDeltaDir, 0, 0.05 );
             uniformsNoise[ 'time' ].value += delta * animDelta;
@@ -296,8 +283,12 @@ function render() {
 
         }
 
-        renderer.render( scene, camera );
+        renderer.render( this.scene, this.camera );
 
     }
 
 }
+
+}
+
+export default NoiseTerrainTreadmillHelper;
