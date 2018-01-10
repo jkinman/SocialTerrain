@@ -329,7 +329,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     //   });
     // }
 
-    // this.loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
+    this.loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
 
   }
 

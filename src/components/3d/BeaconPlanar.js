@@ -188,19 +188,19 @@ class Beacon extends THREE.Object3D {
     }
 
     if (message.imageUrl) {
-      let img = new Image();
-      img.crossOrigin = "Anonymous";
-      img.onload = () => {
+      let profileImage = new Image();
+      profileImage.crossOrigin = "Anonymous";
+      profileImage.onload = () => {
         context.drawImage(
-          img,
+          profileImage,
           TWITTER_PROFILE_WIDTH / 2,
           TWITTER_PROFILE_WIDTH / 2,
           TWITTER_PROFILE_WIDTH,
           TWITTER_PROFILE_HEIGHT
         );
-      drawTextSub(context);
+      // drawTextSub(context);
       };
-      img.src = message.imageUrl;
+      profileImage.src = message.imageUrl;
     }
     
     // CORNER FLAGS
@@ -298,14 +298,35 @@ class Beacon extends THREE.Object3D {
         if (this.event.impact) {
           size = 6 * this.event.impact;
         }
-  
         e.scale.set(1,1,1);
-        let anim = new TWEEN.Tween(e.scale)
+
+        let ambientAnim = new TWEEN.Tween(e.scale)
+          .easing(TWEEN.Easing.Sinusoidal.InOut)
+          .to ({ y: size * 1.05, x: size * 1.05, z: 1 }, FADE_OUT_TIME * 1.5)
+          .repeat(20)
+          .delay( 250 )
+          .yoyo( true );
+  
+        let popIn = new TWEEN.Tween(e.scale)
           .easing(TWEEN.Easing.Bounce.InOut)
           .to ({ y: size, x: size, z: 1 }, FADE_OUT_TIME)
-          .start();
+
+          popIn.chain(ambientAnim);
+          popIn.start();
       }
     })
+  }
+
+  startYoyo(obj) {
+    // obj.scale.set(1,1,1);
+    let size = 6 * this.event.impact;
+
+    let anim = new TWEEN.Tween(obj.scale)
+      .easing(TWEEN.Easing.Bounce.InOut)
+      .to ({ y: size, x: size, z: 1 }, FADE_OUT_TIME)
+      .yoyo( true )
+      .repeat(TWEEN.Infinity)
+      .start()
   }
 
   fadeOut() {
@@ -339,19 +360,18 @@ class Beacon extends THREE.Object3D {
     if (this.shockwave) {
       this.shockwave.material.opacity = 0.8;
       let blastFade = new TWEEN.Tween(this.shockwave.material)
-        .easing(TWEEN.Easing.Quadratic.Out)
+        .easing(TWEEN.Easing.Exponential.Out)
         .to({ opacity: 0.0 }, SHOCKWAVE_ANIM_TIME)
         .start();
       
       let size = 60;
       if (this.event.impact) {
-        size = 1 * this.event.impact;
+        size = this.event.impact;
       }
 
       let blastGrow = new TWEEN.Tween(this.shockwave.scale)
         .easing(TWEEN.Easing.Quadratic.Out)
         .to({ y: size, x: size, z: 1 }, SHOCKWAVE_ANIM_TIME)
-        // .to({ x: size/20, y: size, z: size/20 }, SHOCKWAVE_ANIM_TIME)
         .start();
         
       // let shockwavePosition = this.shockwave.position;
@@ -406,7 +426,7 @@ class Beacon extends THREE.Object3D {
     }
 
     if ( event.shockwave ) {
-      // let geo = new THREE.CircleGeometry(1, 32);
+      // let geo = new THREE.CircleGeometry(5, 32);
       let geo = new THREE.RingGeometry( 8.5, 10, 30, 3 );
       // let geo = new THREE.CylinderGeometry( 1, 1, 3, 32, 32 );
       
@@ -415,12 +435,12 @@ class Beacon extends THREE.Object3D {
         // color: CONTRAST,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 1.0,
+        opacity: 0.75,
         emissiveIntensity: 0.5,
         emissive: 0xFFFFFF
       });
       this.shockwave = new THREE.Mesh(geo, material);
-
+      this.shockwave.name = 'shockwave';
       this.shockwave.position.x = position.x;
       this.shockwave.position.y = position.y;
       this.shockwave.position.z = position.z;
