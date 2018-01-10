@@ -33,6 +33,7 @@ class Beacon extends THREE.Object3D {
       map,
       lifeSpan
     );
+    this.name = "beacon";
   }
 
   activate() {

@@ -118,7 +118,7 @@ class BaseSceneComponent extends React.Component {
       camera = preMadeCamera;
     }
     else{
-      camera = new THREE.PerspectiveCamera( 40, SCREEN_WIDTH / SCREEN_HEIGHT, 2, 4000 );
+      camera = new THREE.PerspectiveCamera( 40, SCREEN_WIDTH / SCREEN_HEIGHT, 2, 12000 );
     }
     scene = new THREE.Scene();
     
@@ -184,6 +184,7 @@ class BaseSceneComponent extends React.Component {
 
     TWEEN.update();
     if( this.stats ) this.stats.update();
+    if( this.controls ) this.controls.update();
 
     renderer.render( shaderScene, textureCamera, this.shaderRenderer );
     if( this.postprocessing ){

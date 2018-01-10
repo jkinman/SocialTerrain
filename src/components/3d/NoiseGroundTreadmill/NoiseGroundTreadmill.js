@@ -49,6 +49,24 @@ let animateTerrain = false;
 let mlib = {};
 
 const socket = openSocket(config.serverUrl);
+// TODO make a channel to kick off other remotes
+// const socket = openSocket(`${config.serverUrl}/client`);
+socket.on("orientation", orientation => {
+  deviceOrientation = orientation;
+});
+
+socket.on("screenrotation", orientation => {
+  screenOrientation = orientation.direction;
+});
+
+
+// rotation consts
+const zee = new THREE.Vector3(0, 0, 1);
+const euler = new THREE.Euler();
+const q0 = new THREE.Quaternion();
+const q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
+let deviceOrientation;
+let screenOrientation = 0;
 
 
 class NoiseTerrainTreadmill extends BaseSceneComponent {
@@ -58,6 +76,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         let settings = {
             showStats: true, 
             controls: 'orbit', 
+            // controls: 'none', 
             elementId: 'noiseGroundTreadmill-component',
         };
         super(props, context, settings);
@@ -67,7 +86,12 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
     renderLoop() {
         super.renderLoop();
         let delta = treadmillClock.getDelta();
-
+        this.globalEvents.traverse((obj) => {
+            if( obj.name == 'beacon'){
+                obj.position.x -= 2;            
+                // obj.position.z -= 2;            
+            }
+        })
         if ( terrain.visible ) {
             let time = Date.now() * 0.001;
             let fLow = 0.1, fHigh = 0.8;
@@ -75,7 +99,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
 
             let valNorm = ( lightVal - fLow ) / ( fHigh - fLow );
             this.scene.background.setHSL( HUE, SATURATION, lightVal );
-            this.scene.fog.color.setHSL( HUE, SATURATION, lightVal );
+            // this.scene.fog.color.setHSL( HUE, SATURATION, lightVal );
 
             this.directionalLight.intensity = THREE.Math.mapLinear( valNorm, 0, 1, 0.1, 1.15 );
             this.pointLight.intensity = THREE.Math.mapLinear( valNorm, 0, 1, 0.9, 1.5 );
@@ -93,6 +117,9 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
                 this.renderer.render( sceneRenderTarget, cameraOrtho, normalMap, true );
             }
         }
+        if (deviceOrientation){
+            this.cameraRotate(deviceOrientation);
+        }
     }
 
     componentDidMount() {
@@ -109,15 +136,22 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         this.showGlobalEvent(nextProps.tweets[nextProps.tweets.length - 1]);
       }
     
+      getRandomInt(variance) {
+        return (Math.floor(Math.random() * Math.floor(variance))) - variance /2;
+      }
       showGlobalEvent(event = {}) {
         // clear old geo
         this.clearDeadGlobalGeo();
-        let position = this.camera.position;
-        position.x =+ 200;
-        
+        // let position = this.camera.position.clone();
+        let position = new THREE.Vector3( 
+            2000 + this.getRandomInt(1000), 
+            -700 + this.getRandomInt(500),  
+            this.getRandomInt(1000) 
+        )
+
         const beacon = new BeaconPlanar(
           {...event, 
-            impact: 50,
+            impact: 100,
             shockwave: true, 
             title: event.handle, 
             subtitle: event.text, 
@@ -133,7 +167,6 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         this.globalEvents.add(beacon);
         beacon.activate();
       
-        this.camera.lookAt(position.x, position.y, position.z)
       }
     
       clearDeadGlobalGeo( all=false ) {
@@ -146,9 +179,10 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
     
     sceneObjectInit() {
         
-        this.camera.position.set( -1200, 3000, 1200 );
+        // this.camera.position.set( -1200, 500, 1200 );
+        this.camera.position.set( 0, 7050, 0 );
         this.scene.background = FOG_COLOUR;
-        this.scene.fog = new THREE.Fog( FOG_COLOUR, 2000, 4000 );
+        // this.scene.fog = new THREE.Fog( FOG_COLOUR, 2500, 4000 );
 
         this.scene.add( new THREE.AmbientLight( LIGHT_COLOUR_AMBIENT, 1 ) );
 
@@ -207,8 +241,8 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         specularMap.texture.generateMipmaps = false;    
         
         let diffuseTexture1 = textureLoader.load( GrassLight );
-        let diffuseTexture2 = textureLoader.load( GrassLightNM );
-        let detailTexture = textureLoader.load( BackgroundDetailed );
+        let diffuseTexture2 = textureLoader.load( BackgroundDetailed );
+        let detailTexture = textureLoader.load( GrassLightNM );
 
         diffuseTexture1.wrapS = diffuseTexture1.wrapT = THREE.RepeatWrapping;
         diffuseTexture2.wrapS = diffuseTexture2.wrapT = THREE.RepeatWrapping;
@@ -284,7 +318,8 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
       
         terrain = new THREE.Mesh( geometryTerrain, mlib[ 'terrain' ] );
 
-        terrain.position.set( 0, -125, 0 );
+        // terrain.position.set( 0, -525, 0 );
+        terrain.position.set( 0, -1025, 0 );
         terrain.rotation.x = -Math.PI / 2;
         terrain.visible = false;
         this.scene.add( terrain );
@@ -298,6 +333,27 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
 
     }
 
+    cameraRotate(obj) {
+        this.alphaOffset = 0;
+        let alpha = obj.alpha ? THREE.Math.degToRad(obj.alpha) + this.alphaOffset : 0; // Z
+        let beta = obj.beta ? THREE.Math.degToRad(obj.beta) : 0; // X'
+        let gamma = obj.gamma ? THREE.Math.degToRad(obj.gamma) : 0; // Y''
+        // I LUCKED OUT AND EVERYTHING WORKS IF I MULTIPLY BEAT BY -1
+        beta = -beta;
+    
+        var orient = screenOrientation ? THREE.Math.degToRad(screenOrientation) : 0; // O
+    
+        this.setObjectQuaternion(this.gimble.quaternion, alpha, beta, gamma, orient);
+        this.setObjectQuaternion(this.camera.quaternion, alpha, beta, gamma, orient);
+      }
+    
+      setObjectQuaternion(quaternion, alpha, beta, gamma, orient) {
+        euler.set(beta, alpha, -gamma, "YXZ"); // 'ZXY' for the device, but 'YXZ' for us
+        quaternion.setFromEuler(euler); // orient the device
+        quaternion.multiply(q1); // camera looks out the back of the device, not the top
+        quaternion.multiply(q0.setFromAxisAngle(zee, -orient)); // adjust for screen orientation
+      }
+    
     cameraOrientationLinkingSetup() {
         this.gimble = new THREE.Mesh(
           new THREE.BoxGeometry( 4, 8, 1 ), 
