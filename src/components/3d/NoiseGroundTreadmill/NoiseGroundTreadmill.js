@@ -19,7 +19,7 @@ require("imports-loader?THREE=three!../../../externals/three.js/examples/js/cont
 
 let SCREEN_WIDTH = window.innerWidth;
 let SCREEN_HEIGHT = window.innerHeight;
-
+const LAND_HEIGHT = -700;
 
 const HUE = 0.5;
 const SATURATION = 0.5;
@@ -41,13 +41,14 @@ let terrain = {};
 let textureCounter = 0;
 
 let animDelta = 0, animDeltaDir = -1;
-let lightVal = 0, lightDir = 1;
+let lightVal = 0, lightDir = -1;
 
 let treadmillClock = new THREE.Clock();
 
 let animateTerrain = false;
 let mlib = {};
 
+// LINK UP SOCKET EVENTS
 const socket = openSocket(config.serverUrl);
 // TODO make a channel to kick off other remotes
 // const socket = openSocket(`${config.serverUrl}/client`);
@@ -58,7 +59,6 @@ socket.on("orientation", orientation => {
 socket.on("screenrotation", orientation => {
   screenOrientation = orientation.direction;
 });
-
 
 // rotation consts
 const zee = new THREE.Vector3(0, 0, 1);
@@ -81,17 +81,35 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         };
         super(props, context, settings);
         this.updateNoise = true;
+        socket.on("remoteMessage", data => {
+            this.remoteEventHandler(data)
+        });
+        
     }
 
     renderLoop() {
         super.renderLoop();
         let delta = treadmillClock.getDelta();
         this.globalEvents.traverse((obj) => {
-            if( obj.name == 'beacon'){
-                obj.position.x -= 2;            
-                // obj.position.z -= 2;            
+            if( obj.name == 'beacon' || obj.name == 'movable'){
+                obj.position.x -= 2 + Math.abs(obj.seed || 1);
+                if( 0.5 > Math.random()){
+                    obj.position.z += obj.seed || 1;
+                }
             }
         })
+
+        this.trees.traverse((tree) => {
+           if( tree.name == 'tree'){
+                tree.traverse(( child ) => {
+                    if ( child instanceof THREE.Mesh ) {
+                        child.position.x -= 2;
+                    // obj.position.z -= 2;
+                    }
+                })
+            }
+        })
+        
         if ( terrain.visible ) {
             let time = Date.now() * 0.001;
             let fLow = 0.1, fHigh = 0.8;
@@ -99,7 +117,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
 
             let valNorm = ( lightVal - fLow ) / ( fHigh - fLow );
             this.scene.background.setHSL( HUE, SATURATION, lightVal );
-            // this.scene.fog.color.setHSL( HUE, SATURATION, lightVal );
+            if(this.props.fog) this.scene.fog.color.setHSL( HUE, SATURATION, lightVal );
 
             this.directionalLight.intensity = THREE.Math.mapLinear( valNorm, 0, 1, 0.1, 1.15 );
             this.pointLight.intensity = THREE.Math.mapLinear( valNorm, 0, 1, 0.9, 1.5 );
@@ -127,7 +145,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         super.componentDidMount();
         this.init();
         this.sceneObjectInit();
-        this.cameraOrientationLinkingSetup();
+        // this.cameraOrientationLinkingSetup();
         this.renderLoop();
     }
 
@@ -142,16 +160,15 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
       showGlobalEvent(event = {}) {
         // clear old geo
         this.clearDeadGlobalGeo();
-        // let position = this.camera.position.clone();
         let position = new THREE.Vector3( 
-            2000 + this.getRandomInt(1000), 
-            -700 + this.getRandomInt(500),  
-            this.getRandomInt(1000) 
+            3500 + this.getRandomInt(1000), 
+            -200 + this.getRandomInt(1000),  
+            this.getRandomInt(2000) 
         )
 
         const beacon = new BeaconPlanar(
           {...event, 
-            impact: 100,
+            impact: 80,
             shockwave: true, 
             title: event.handle, 
             subtitle: event.text, 
@@ -180,11 +197,12 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
     sceneObjectInit() {
         
         // this.camera.position.set( -1200, 500, 1200 );
-        this.camera.position.set( 0, 7050, 0 );
+        this.camera.position.set( -250, 800, -250 );
         this.scene.background = FOG_COLOUR;
-        // this.scene.fog = new THREE.Fog( FOG_COLOUR, 2500, 4000 );
+        
+        if(this.props.fog) this.scene.fog = new THREE.Fog( FOG_COLOUR, 2000, 4000 );
 
-        this.scene.add( new THREE.AmbientLight( LIGHT_COLOUR_AMBIENT, 1 ) );
+        this.scene.add( new THREE.AmbientLight( LIGHT_COLOUR_AMBIENT ) );
 
         this.directionalLight = new THREE.DirectionalLight( LIGHT_COLOUR_DIRECTIONAL, 1.15 );
         this.directionalLight.position.set( 500, 2000, 0 );
@@ -292,7 +310,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
                 vertexShader: 	params[ i ][ 2 ],
                 fragmentShader: params[ i ][ 1 ],
                 lights: 		params[ i ][ 4 ],
-                fog: 			true
+                fog: 			this.props.fog
                 } );
 
             mlib[ params[ i ][ 0 ] ] = material;
@@ -302,12 +320,13 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         let plane = new THREE.PlaneBufferGeometry( SCREEN_WIDTH, SCREEN_HEIGHT );
 
         quadTarget = new THREE.Mesh( plane, new THREE.MeshBasicMaterial( { color: 0x000000 } ) );
-        quadTarget.position.z = -500;
+        quadTarget.position.z = -1000;
         sceneRenderTarget.add( quadTarget );
 
         // TERRAIN MESH
 
-        let geometryTerrain = new THREE.PlaneBufferGeometry( 6000, 6000, 256, 256 );
+        // let geometryTerrain = new THREE.PlaneBufferGeometry( 6000, 6000, 256, 256 );
+        let geometryTerrain = new THREE.PlaneBufferGeometry( 8000, 8000, 256, 256 );
 
         THREE.BufferGeometryUtils.computeTangents( geometryTerrain );
 
@@ -318,10 +337,11 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
       
         terrain = new THREE.Mesh( geometryTerrain, mlib[ 'terrain' ] );
 
-        // terrain.position.set( 0, -525, 0 );
-        terrain.position.set( 0, -1025, 0 );
+        // terrain.position.set( 0, -125, 0 );
+        terrain.position.set( 0, LAND_HEIGHT, 0 );
         terrain.rotation.x = -Math.PI / 2;
         terrain.visible = false;
+        // terrain.scale.set( 1.5, 1.5, 1.5)
         this.scene.add( terrain );
 
         this.worldgroup = new THREE.Object3D();
@@ -330,9 +350,61 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         this.globalEvents = new THREE.Object3D();
         this.worldgroup.add(this.globalEvents);
         this.trees = new THREE.Object3D();
+        this.scene.add(this.trees);
+
+        this.objLoader = new THREE.OBJLoader(loadingManager);        
+        this.objLoader.load( TreeObj, this.handleTree.bind(this), null, (err) => console.log(err), null, true );
+        document.addEventListener( 'keydown', this.onKeyDown.bind(this), false );
 
     }
+    
+    remoteEventHandler( data ) {
 
+        let position = new THREE.Vector3( 
+            3500 + this.getRandomInt(1000), 
+            -200 + this.getRandomInt(1000),  
+            this.getRandomInt(2000) 
+        )
+
+        
+        let newObj;
+        newObj = this.cloneLoadedOBJ( this.obj3dTree.clone(), Math.random() * 10 )
+        newObj.position.set(position.x, position.y, position.z)
+        this.trees.add(newObj)
+      }
+    
+    handleTree( treeObj ) {
+        this.obj3dTree = treeObj;
+    }
+
+    cloneLoadedOBJ (obj=null, scale=1) {
+
+        // let treeMaterial = new THREE.MeshBasicMaterial({
+        //   wireframe: false,
+        //   color: 0x229922,      
+        //   side: THREE.DoubleSide,
+        // });
+
+        let treeMaterial = new THREE.MeshLambertMaterial( {
+            wireframe: this.props.meshTerrain,
+            color: this.props.terrainColour
+        } )
+
+        let treeCopy = new THREE.Object3D()
+        treeCopy.name = `tree`;
+        obj.traverse(( child ) => {
+          if ( child instanceof THREE.Mesh ) {
+            let newMesh = child.clone(true)
+            newMesh.position.set(0,LAND_HEIGHT / 2, 0)
+            newMesh.scale.set(scale,scale,scale)
+            newMesh.material = treeMaterial;
+            treeCopy.add(newMesh) 
+          }
+        });
+
+        return treeCopy;
+      }
+    
     cameraRotate(obj) {
         this.alphaOffset = 0;
         let alpha = obj.alpha ? THREE.Math.degToRad(obj.alpha) + this.alphaOffset : 0; // Z
@@ -343,7 +415,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
     
         var orient = screenOrientation ? THREE.Math.degToRad(screenOrientation) : 0; // O
     
-        this.setObjectQuaternion(this.gimble.quaternion, alpha, beta, gamma, orient);
+        if(this.gimble) this.setObjectQuaternion(this.gimble.quaternion, alpha, beta, gamma, orient);
         this.setObjectQuaternion(this.camera.quaternion, alpha, beta, gamma, orient);
       }
     
@@ -377,6 +449,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         switch( event.keyCode ) {
             case 78: /*N*/  lightDir *= -1; break;
             case 77: /*M*/  animDeltaDir *= -1; break;
+            case 32: this.remoteEventHandler();
         }
     }
 

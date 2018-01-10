@@ -19,8 +19,6 @@ import NoiseGroundTreadmill from "./NoiseGroundTreadmill/NoiseGroundTreadmill";
 
 let TWEEN = require("tween.js");
 
-let deviceOrientation;
-let screenOrientation = 0;
 
 // TODO make a channel to kick off other remotes
 // const socket = openSocket(`${config.serverUrl}/client`);
@@ -39,6 +37,8 @@ const zee = new THREE.Vector3(0, 0, 1);
 const euler = new THREE.Euler();
 const q0 = new THREE.Quaternion();
 const q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
+let deviceOrientation;
+let screenOrientation = 0;
 
 const CRAWL_SPEED = 0.0;
 const CAMERA_ANIMATION_DELAY = 3000;

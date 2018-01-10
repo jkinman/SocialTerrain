@@ -118,7 +118,7 @@ class BaseSceneComponent extends React.Component {
       camera = preMadeCamera;
     }
     else{
-      camera = new THREE.PerspectiveCamera( 40, SCREEN_WIDTH / SCREEN_HEIGHT, 2, 12000 );
+      camera = new THREE.PerspectiveCamera( 40, SCREEN_WIDTH / SCREEN_HEIGHT, 2, 6000 );
     }
     scene = new THREE.Scene();
     

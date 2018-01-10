@@ -34,6 +34,10 @@ class Beacon extends THREE.Object3D {
       lifeSpan
     );
     this.name = "beacon";
+    this.seed = this.getRandomInt(50) / 10;
+  }
+  getRandomInt(variance) {
+    return (Math.floor(Math.random() * Math.floor(variance))) - variance /2;
   }
 
   activate() {
@@ -297,7 +301,7 @@ class Beacon extends THREE.Object3D {
   
         e.scale.set(1,1,1);
         let anim = new TWEEN.Tween(e.scale)
-          .easing(TWEEN.Easing.Elastic.Out)
+          .easing(TWEEN.Easing.Bounce.InOut)
           .to ({ y: size, x: size, z: 1 }, FADE_OUT_TIME)
           .start();
       }
