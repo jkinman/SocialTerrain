@@ -1,5 +1,3 @@
-<script id="fragmentShaderNoise" type="x-shader/x-fragment">
-
 //
 // Description : Array and textureless GLSL 3D simplex noise function.
 //      Author : Ian McEwan, Ashima Arts.
