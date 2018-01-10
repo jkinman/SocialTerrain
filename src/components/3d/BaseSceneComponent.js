@@ -1,7 +1,7 @@
 'use strict';
 
 import React from 'react';
-import * as THREE from 'three'
+import * as THREE from 'three';
 // STATS FPS counter
 import Stats from '../../externals/three.js/examples/js/libs/stats.min.js';
 let TWEEN = require('tween.js');
@@ -25,7 +25,6 @@ require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/SSAOShader.js");
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/FilmShader.js");
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/BokehShader.js");
-require("imports-loader?THREE=three!../../externals/three.js/examples/js/controls/FlyControls.js");
 
 
 const CAMERA_ANIMATION_DELAY = 3000;
@@ -92,6 +91,8 @@ class BaseSceneComponent extends React.Component {
   componentDidMount( preMadeCamera = false){
     // setup rederer and add to DOM
     this.mounted = true;
+    const SCREEN_WIDTH = window.innerWidth;
+    const SCREEN_HEIGHT = window.innerHeight;
 
     renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -121,7 +122,8 @@ class BaseSceneComponent extends React.Component {
       camera = preMadeCamera;
     }
     else{
-      camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
+      // camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
+      camera = new THREE.PerspectiveCamera( 40, SCREEN_WIDTH / SCREEN_HEIGHT, 2, 4000 );
     }
     scene = new THREE.Scene();
     

@@ -64,21 +64,26 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
 
   renderLoop() {
     if (!this.mounted) return;
+    let delta = this.Childclock.getDelta();
+
+    if( this.terrainTreadmill ) this.terrainTreadmill.render( delta );
+
     super.renderLoop();    
 
-    let delta = this.Childclock.getDelta();
     TWEEN.update();
-    this.controls.update( delta );
+    if( this.controls ) this.controls.update( delta );
     
-    // creep the camera gimble along
-    this.cameraPivot.position.z -= CRAWL_SPEED;
-
-    if( this.heightMap && this.groundMesh && this.cameraPivot ) {
-      let cameraPivotPosition	= this.cameraPivot.position;
-      cameraPivotPosition.y	= 5 + THREEx.Terrain.planeToHeightMapCoords(
-        this.heightMap, this.groundMesh, cameraPivotPosition.x, cameraPivotPosition.z);
+    if( this.cameraPivot ) {
+      // creep the camera gimble along
+      this.cameraPivot.position.z -= CRAWL_SPEED;
+  
+      if( this.heightMap && this.groundMesh  ) {
+        let cameraPivotPosition	= this.cameraPivot.position;
+        cameraPivotPosition.y	= 5 + THREEx.Terrain.planeToHeightMapCoords(
+          this.heightMap, this.groundMesh, cameraPivotPosition.x, cameraPivotPosition.z);
+      }  
     }
-    
+        
     if (deviceOrientation){
       this.cameraRotate(deviceOrientation);
     }
@@ -93,17 +98,18 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     // this.createTHREEXTerrain();
     this.terrainTreadmill = new NoiseGroundTreadmill(this.camera, this.scene, this.renderer);
     this.terrainTreadmill.init();
-    this.terrainTreadmill.sceneConfig();
+    this.terrainTreadmill.sceneObectInit();
     // this.sceneObectInit();
     // this.addLightsAndFog();
 
-
-    this.controls = new THREE.FlyControls( this.cameraPivot );
-    this.controls.movementSpeed = 2;
-    this.controls.domElement = document.getElementById( 'proceduralLandscape-component' );
-    this.controls.rollSpeed = Math.PI / 24;
-    this.controls.autoForward = false;
-    this.controls.dragToLook = true;
+    if( this.cameraPivot) {
+      this.controls = new THREE.FlyControls( this.cameraPivot );
+      this.controls.movementSpeed = 2;
+      this.controls.domElement = document.getElementById( 'proceduralLandscape-component' );
+      this.controls.rollSpeed = Math.PI / 24;
+      this.controls.autoForward = false;
+      this.controls.dragToLook = true;
+    }
 
     socket.on("remoteMessage", data => {
       this.remoteEventHandler(data)
@@ -111,11 +117,11 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
 
     this.mounted = true;
       // THIS TURNS ON POST PROCESSING
-      this.startPostProcessing();
+      // this.startPostProcessing();
   }
 
   componentWillReceiveProps(nextProps) {
-    this.showGlobalEvent(nextProps.tweets[nextProps.tweets.length - 1]);
+    // this.showGlobalEvent(nextProps.tweets[nextProps.tweets.length - 1]);
   }
 
   cameraRotate(obj) {
@@ -150,8 +156,9 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
   showGlobalEvent(event = {}) {
     // clear old geo
     this.clearDeadGlobalGeo();
-    const position = this.fakeCoords(this.cameraPivot);
-    let cameraPivotPosition	= this.cameraPivot.position;
+    let relativeCameraLocationObj = this.cameraPivot || this.camera;
+    const position = this.fakeCoords(relativeCameraLocationObj);
+    let cameraPivotPosition	= relativeCameraLocationObj.position;
     
     position.y	= 1 + THREEx.Terrain.planeToHeightMapCoords(
       this.heightMap, this.groundMesh, cameraPivotPosition.x, cameraPivotPosition.z);

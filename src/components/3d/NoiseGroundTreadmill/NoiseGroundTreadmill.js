@@ -1,3 +1,4 @@
+// import * as THREE from 'three';
 import vertexShader from 'raw-loader!./shaders/vertexShader.txt';
 import fragmentShaderNoise from 'raw-loader!./shaders/fragmentShaderNoise.txt';
 
@@ -8,12 +9,13 @@ import BackgroundDetailed from '../../../static/3dAssets/textures/terrain/backgr
 require("imports-loader?THREE=three!../../../externals/three.js/examples/js/shaders/NormalMapShader.js");
 require("imports-loader?THREE=three!../../../externals/three.js/examples/js/ShaderTerrain.js");
 require("imports-loader?THREE=three!../../../externals/three.js/examples/js/BufferGeometryUtils.js");
+require("imports-loader?THREE=three!../../../externals/three.js/examples/js/controls/OrbitControls.js");
 
 let SCREEN_WIDTH = window.innerWidth;
 let SCREEN_HEIGHT = window.innerHeight;
 
 
-let camera, scene;
+// let camera, scene;
 let cameraOrtho, sceneRenderTarget;
 
 let uniformsNoise, uniformsNormal, uniformsTerrain,
@@ -29,16 +31,14 @@ let textureCounter = 0;
 let animDelta = 0, animDeltaDir = -1;
 let lightVal = 0, lightDir = 1;
 
-let clock = new THREE.Clock();
-
-
+let treadmillClock = new THREE.Clock();
 
 let animateTerrain = false;
 
 let mlib = {};
 
 
-class NoiseTerrainTreadmillHelper {
+class NoiseTerrainTreadmill {
     constructor( camera, scene, renderer ) {
         this.renderer = renderer;
         this.camera = camera;
@@ -50,6 +50,16 @@ sceneObectInit() {
     this.camera.position.set( -1200, 800, 1200 );
     this.scene.background = new THREE.Color( 0x050505 );
     this.scene.fog = new THREE.Fog( 0x050505, 2000, 4000 );
+
+    this.scene.add( new THREE.AmbientLight( 0x111111 ) );
+
+    directionalLight = new THREE.DirectionalLight( 0xffffff, 1.15 );
+    directionalLight.position.set( 500, 2000, 0 );
+    this.scene.add( directionalLight );
+
+    pointLight = new THREE.PointLight( 0xff4400, 1.5 );
+    pointLight.position.set( 0, 0, 0 );
+    this.scene.add( pointLight );
 
 }
 
@@ -67,18 +77,13 @@ init() {
     // camera = new THREE.PerspectiveCamera( 40, SCREEN_WIDTH / SCREEN_HEIGHT, 2, 4000 );
     // this.camera.position.set( -1200, 800, 1200 );
 
-    // SCENE (FINAL)
-    // LIGHTS
+    let controls = new THREE.OrbitControls( this.camera );
 
-    this.scene.add( new THREE.AmbientLight( 0x111111 ) );
+    controls.rotateSpeed = 1.0;
+    controls.zoomSpeed = 1.2;
+    controls.panSpeed = 0.8;
 
-    directionalLight = new THREE.DirectionalLight( 0xffffff, 1.15 );
-    directionalLight.position.set( 500, 2000, 0 );
-    this.scene.add( directionalLight );
-
-    pointLight = new THREE.PointLight( 0xff4400, 1.5 );
-    pointLight.position.set( 0, 0, 0 );
-    this.scene.add( pointLight );
+    controls.keys = [ 65, 83, 68 ];
 
 
     // HEIGHT + NORMAL MAPS
@@ -162,6 +167,7 @@ init() {
 
     uniformsTerrain[ 'uRepeatOverlay' ].value.set( 6, 6 );
 
+
     let params = [
         [ 'heightmap', 	fragmentShaderNoise, 	vertexShader, uniformsNoise, false ],
         [ 'normal', 	normalShader.fragmentShader,  normalShader.vertexShader, uniformsNormal, false ],
@@ -169,7 +175,6 @@ init() {
      ];
 
     for( let i = 0; i < params.length; i ++ ) {
-
         let material = new THREE.ShaderMaterial( {
 
             uniforms: 		params[ i ][ 3 ],
@@ -183,6 +188,7 @@ init() {
 
     }
 
+    debugger;
 
     let plane = new THREE.PlaneBufferGeometry( SCREEN_WIDTH, SCREEN_HEIGHT );
 
@@ -210,44 +216,40 @@ init() {
 
     // EVENTS
 
-    onWindowResize();
-    window.addEventListener( 'resize', onWindowResize, false );
-    document.addEventListener( 'keydown', onKeyDown, false );
+    this.onWindowResize();
+    // window.addEventListener( 'resize', this.onWindowResize, false );
+    document.addEventListener( 'keydown', this.onKeyDown, false );
 
 }
 
 
  onWindowResize( event ) {
 
-    SCREEN_WIDTH = window.innerWidth;
-    SCREEN_HEIGHT = window.innerHeight;
+    const SCREEN_WIDTH = window.innerWidth;
+    const SCREEN_HEIGHT = window.innerHeight;
 
-    renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
+    this.renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
 
-    camera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
-    camera.updateProjectionMatrix();
+    this.camera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
+    this.camera.updateProjectionMatrix();
 
 }
 
 
 
  onKeyDown ( event ) {
-
     switch( event.keyCode ) {
-
         case 78: /*N*/  lightDir *= -1; break;
         case 77: /*M*/  animDeltaDir *= -1; break;
-
     }
-
 }
 
 
 
- render() {
+ render( deltaParent ) {
 
-    let delta = clock.getDelta();
-
+    let delta = treadmillClock.getDelta();
+debugger
     if ( terrain.visible ) {
 
         let time = Date.now() * 0.001;
@@ -258,8 +260,8 @@ init() {
 
         let valNorm = ( lightVal - fLow ) / ( fHigh - fLow );
 
-        this.scene.background.setHSL( 0.1, 0.5, lightVal );
-        this.scene.fog.color.setHSL( 0.1, 0.5, lightVal );
+        // this.scene.background.setHSL( 0.1, 0.5, lightVal );
+        // this.scene.fog.color.setHSL( 0.1, 0.5, lightVal );
 
         directionalLight.intensity = THREE.Math.mapLinear( valNorm, 0, 1, 0.1, 1.15 );
         pointLight.intensity = THREE.Math.mapLinear( valNorm, 0, 1, 0.9, 1.5 );
@@ -283,7 +285,7 @@ init() {
 
         }
 
-        renderer.render( this.scene, this.camera );
+        // renderer.render( this.scene, this.camera );
 
     }
 
@@ -291,4 +293,4 @@ init() {
 
 }
 
-export default NoiseTerrainTreadmillHelper;
+export default NoiseTerrainTreadmill;
