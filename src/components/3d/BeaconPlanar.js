@@ -72,7 +72,8 @@ class Beacon extends THREE.Object3D {
     });
 
     let sprite = new THREE.Sprite(shaderSpriteMaterial);
-    sprite.scale.set(scale , scale /2, 1.0);
+    // sprite.scale.set(scale , scale /2, 1.0);
+    sprite.scale.set(100 , 100 /2, 1.0);
     return sprite;
   }
 

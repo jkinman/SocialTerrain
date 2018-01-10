@@ -20,6 +20,14 @@ require("imports-loader?THREE=three!../../../externals/three.js/examples/js/cont
 let SCREEN_WIDTH = window.innerWidth;
 let SCREEN_HEIGHT = window.innerHeight;
 
+
+const HUE = 0.5;
+const SATURATION = 0.5;
+const LIGHT_COLOUR_POINT = new THREE.Color("rgb(255, 255, 255)"); //0xff4400
+const LIGHT_COLOUR_DIRECTIONAL = new THREE.Color("rgb(255, 255, 255)");
+const LIGHT_COLOUR_AMBIENT = new THREE.Color("rgb(255, 255, 255)");
+const FOG_COLOUR = new THREE.Color( 'rgb(0, 0, 0)' );
+
 // let camera, scene, renderer;
 let cameraOrtho, sceneRenderTarget;
 
@@ -38,8 +46,10 @@ let lightVal = 0, lightDir = 1;
 let treadmillClock = new THREE.Clock();
 
 let animateTerrain = false;
-
 let mlib = {};
+
+const socket = openSocket(config.serverUrl);
+
 
 class NoiseTerrainTreadmill extends BaseSceneComponent {
 
@@ -54,23 +64,18 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         this.updateNoise = true;
     }
 
-
     renderLoop() {
         super.renderLoop();
         let delta = treadmillClock.getDelta();
 
         if ( terrain.visible ) {
-
             let time = Date.now() * 0.001;
-
             let fLow = 0.1, fHigh = 0.8;
-
             lightVal = THREE.Math.clamp( lightVal + 0.5 * delta * lightDir, fLow, fHigh );
 
             let valNorm = ( lightVal - fLow ) / ( fHigh - fLow );
-
-            this.scene.background.setHSL( 0.1, 0.5, lightVal );
-            this.scene.fog.color.setHSL( 0.1, 0.5, lightVal );
+            this.scene.background.setHSL( HUE, SATURATION, lightVal );
+            this.scene.fog.color.setHSL( HUE, SATURATION, lightVal );
 
             this.directionalLight.intensity = THREE.Math.mapLinear( valNorm, 0, 1, 0.1, 1.15 );
             this.pointLight.intensity = THREE.Math.mapLinear( valNorm, 0, 1, 0.9, 1.5 );
@@ -78,48 +83,80 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
             uniformsTerrain[ 'uNormalScale' ].value = THREE.Math.mapLinear( valNorm, 0, 1, 0.6, 3.5 );
             
             if ( this.updateNoise ) {
-
                 animDelta = THREE.Math.clamp( animDelta + 0.00075 * animDeltaDir, 0, 0.05 );
                 uniformsNoise[ 'time' ].value += delta * animDelta;
-
                 uniformsNoise[ 'offset' ].value.x += delta * 0.05;
-
                 uniformsTerrain[ 'uOffset' ].value.x = 4 * uniformsNoise[ 'offset' ].value.x;
-
                 quadTarget.material = mlib[ 'heightmap' ];
                 this.renderer.render( sceneRenderTarget, cameraOrtho, heightMap, true );
-
                 quadTarget.material = mlib[ 'normal' ];
                 this.renderer.render( sceneRenderTarget, cameraOrtho, normalMap, true );
-
             }
-
-            // renderer.render( this.scene, this.camera );
-            // requestAnimationFrame( this.renderLoop.bind( this ) );
-
         }
     }
 
     componentDidMount() {
+
         super.componentDidMount();
         this.init();
         this.sceneObjectInit();
-        
+        this.cameraOrientationLinkingSetup();
         this.renderLoop();
     }
 
+    componentWillReceiveProps(nextProps) {
+        // TODO fix this
+        this.showGlobalEvent(nextProps.tweets[nextProps.tweets.length - 1]);
+      }
+    
+      showGlobalEvent(event = {}) {
+        // clear old geo
+        this.clearDeadGlobalGeo();
+        let position = this.camera.position;
+        position.x =+ 200;
+        
+        const beacon = new BeaconPlanar(
+          {...event, 
+            impact: 50,
+            shockwave: true, 
+            title: event.handle, 
+            subtitle: event.text, 
+            imageUrl: event.profile,
+            backgroundUrl: event.user.profile_background_image_url,
+            likes: event.entities.favorite_count + event.entities.retweet_count,
+          },
+          position,
+          this.shaderRenderer.texture,
+          20000,
+        );
+        
+        this.globalEvents.add(beacon);
+        beacon.activate();
+      
+        this.camera.lookAt(position.x, position.y, position.z)
+      }
+    
+      clearDeadGlobalGeo( all=false ) {
+        for (var i = this.globalEvents.children.length -1; i >= 0; i--) {
+          if( all || !this.globalEvents.children[i].alive ){
+            this.globalEvents.remove( this.globalEvents.children[i] );
+          }
+        }
+      }
+    
     sceneObjectInit() {
-        this.camera.position.set( -1200, 800, 1200 );
-        this.scene.background = new THREE.Color( 0x050505 );
-        this.scene.fog = new THREE.Fog( 0x050505, 2000, 4000 );
+        
+        this.camera.position.set( -1200, 3000, 1200 );
+        this.scene.background = FOG_COLOUR;
+        this.scene.fog = new THREE.Fog( FOG_COLOUR, 2000, 4000 );
 
-        this.scene.add( new THREE.AmbientLight( 0x111111 ) );
+        this.scene.add( new THREE.AmbientLight( LIGHT_COLOUR_AMBIENT, 1 ) );
 
-        this.directionalLight = new THREE.DirectionalLight( 0xffffff, 1.15 );
+        this.directionalLight = new THREE.DirectionalLight( LIGHT_COLOUR_DIRECTIONAL, 1.15 );
         this.directionalLight.position.set( 500, 2000, 0 );
         this.scene.add( this.directionalLight );
 
-        this.pointLight = new THREE.PointLight( 0xff4400, 1.5 );
+        this.pointLight = new THREE.PointLight( LIGHT_COLOUR_POINT, 1.5 );
         this.pointLight.position.set( 0, 0, 0 );
         this.scene.add( this.pointLight );
 
@@ -135,10 +172,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
 
         sceneRenderTarget.add( cameraOrtho );
 
-        // CAMERA
-        // camera = new THREE.PerspectiveCamera( 40, SCREEN_WIDTH / SCREEN_HEIGHT, 2, 4000 );
         // HEIGHT + NORMAL MAPS
-
         let normalShader = THREE.NormalMapShader;
 
         let rx = 256, ry = 256;
@@ -243,41 +277,46 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
 
         THREE.BufferGeometryUtils.computeTangents( geometryTerrain );
 
+        let lambertGround = new THREE.MeshLambertMaterial( {
+            wireframe: this.props.meshTerrain,
+            color: this.props.terrainColour
+          } )
+      
         terrain = new THREE.Mesh( geometryTerrain, mlib[ 'terrain' ] );
+
         terrain.position.set( 0, -125, 0 );
         terrain.rotation.x = -Math.PI / 2;
         terrain.visible = false;
         this.scene.add( terrain );
 
-        // RENDERER
-        // renderer = new THREE.WebGLRenderer();
-        // renderer.setPixelRatio( window.devicePixelRatio );
-        // renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
-        // container.appendChild( renderer.domElement );
-
-        // EVENTS
-
-        // this.onWindowResize();
-        // window.addEventListener( 'resize', this.onWindowResize, false );
-        // document.addEventListener( 'keydown', this.onKeyDown, false );
+        this.worldgroup = new THREE.Object3D();
+        this.scene.add(this.worldgroup);
+    
+        this.globalEvents = new THREE.Object3D();
+        this.worldgroup.add(this.globalEvents);
+        this.trees = new THREE.Object3D();
 
     }
 
-
-    //  onWindowResize( event ) {
-
-    //     const SCREEN_WIDTH = window.innerWidth;
-    //     const SCREEN_HEIGHT = window.innerHeight;
-
-    //     this.renderer.setSize( SCREEN_WIDTH, SCREEN_HEIGHT );
-
-    //     this.camera.aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
-    //     this.camera.updateProjectionMatrix();
-
-    // }
-
-
-
+    cameraOrientationLinkingSetup() {
+        this.gimble = new THREE.Mesh(
+          new THREE.BoxGeometry( 4, 8, 1 ), 
+          new THREE.MeshLambertMaterial( {color: 0x999999} )
+        )
+        this.gimble.renderOrder = 999;
+        this.gimble.onBeforeRender = ( renderer ) => {renderer.clearDepth()};
+        this.gimble.rotation.reorder("YXZ");
+        this.gimble.scale.set(0.2,0.2,0.2)
+        var vec = new THREE.Vector3( -4, -2, -10 );
+        vec.applyQuaternion( this.camera.quaternion );
+        this.gimble.position.copy( vec );
+        this.camera.add(this.gimble)
+        this.scene.add(this.camera)
+        // for linking with device pos
+        this.camera.rotation.reorder("YXZ");
+        this.gimble.lookAt(this.camera.position)
+      }
+    
     onKeyDown ( event ) {
         switch( event.keyCode ) {
             case 78: /*N*/  lightDir *= -1; break;

@@ -141,12 +141,13 @@ class BaseSceneComponent extends React.Component {
 
 
     // SETUP MAIN WEBGL RENDERER
-    renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      stencil: true,
-      precision: 'highp'
-    });
+    // renderer = new THREE.WebGLRenderer({
+    //   antialias: true,
+    //   alpha: true,
+    //   stencil: true,
+    //   precision: 'highp'
+    // });
+    renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
 
