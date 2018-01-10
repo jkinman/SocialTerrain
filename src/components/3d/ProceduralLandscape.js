@@ -1,4 +1,6 @@
 "use strict";
+// THIS MIGHT BE A GOOD OPTION
+// https://github.com/mrdoob/three.js/blob/master/examples/webgl_terrain_dynamic.html
 
 import * as THREE from "three";
 import React from "react";
