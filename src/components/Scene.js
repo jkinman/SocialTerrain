@@ -1,6 +1,8 @@
 import React from "react";
 import "./scene.scss";
-import Landscape from "./3d/ProceduralLandscape";
+import Landscape from './3d/NoiseGroundTreadmill/NoiseGroundTreadmill';
+// import Landscape from "./3d/ProceduralLandscape";
+
 
 class Scene extends React.Component {
   constructor(props) {

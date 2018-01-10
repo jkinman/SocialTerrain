@@ -54,11 +54,13 @@ class BaseSceneComponent extends React.Component {
     super(props, context);
     this.postprocessing = false;
     this.baseClock = new THREE.Clock();
-    this.settings = settings ? this.settings = settings :
-    {
+    // this.settings = settings ? this.settings = settings :
+    this.settings = {
       showStats: false,
       datgui: false,
-      controls: 'orbit'
+      controls: 'orbit',
+      elementId: '3cscene',
+      ...settings,
     };
     // this.datgui = props.datgui.addFolder( 'base scene' );
 
@@ -97,15 +99,6 @@ class BaseSceneComponent extends React.Component {
     const SCREEN_WIDTH = window.innerWidth;
     const SCREEN_HEIGHT = window.innerHeight;
 
-    renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      stencil: true,
-      precision: 'highp'
-    });
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-
     // setup off screen graphics buffer
     this.shaderRenderer = new THREE.WebGLRenderTarget( TEXTURE_WIDTH, TEXTURE_HEIGHT, {
           minFilter:THREE.LinearFilter,
@@ -125,12 +118,10 @@ class BaseSceneComponent extends React.Component {
       camera = preMadeCamera;
     }
     else{
-      // camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
       camera = new THREE.PerspectiveCamera( 40, SCREEN_WIDTH / SCREEN_HEIGHT, 2, 4000 );
     }
     scene = new THREE.Scene();
     
-    // scene.fog = new THREE.FogExp2( 0x000000, 0.005, 50 );
     // this.setupShaderBuffer();
 
     // if( this.datgui ){
@@ -148,25 +139,41 @@ class BaseSceneComponent extends React.Component {
     //   });
     // }
 
+
+    // SETUP MAIN WEBGL RENDERER
+    renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      stencil: true,
+      precision: 'highp'
+    });
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+    // add renderer to DOM
+    document
+      .getElementById(this.settings.elementId)
+      .appendChild( renderer.domElement );
+
     // FPS counter
     if( this.settings.showStats){
       this.stats = new Stats();
       document
-      .getElementById("proceduralLandscape-component")
+      .getElementById(this.settings.elementId)
       .appendChild( this.stats.dom );
     }
-    
-    if( this.settings.controls === 'orbit' ){
-      controls = new THREE.OrbitControls( this.camera );
 
+    if( this.settings.controls === 'orbit' ){
+      controls = new THREE.OrbitControls( camera );
       controls.rotateSpeed = 1.0;
       controls.zoomSpeed = 1.2;
       controls.panSpeed = 0.8;
-  
       controls.keys = [ 65, 83, 68 ];
-  
     }
-    requestAnimationFrame( this.renderLoop.bind( this ));
+
+    // LINK EVENTS
+    requestAnimationFrame( this.renderLoop.bind(this));
+    window.addEventListener( 'resize', this.resize, false );
 
   }
 
@@ -190,6 +197,7 @@ class BaseSceneComponent extends React.Component {
       this.bufferShaderMaterial.uniforms[ 'iGlobalTime' ].value = (Date.now() - this.start) / 1000;
       this.bufferShaderMaterial.uniforms[ 't' ].value = (Date.now() - this.start) / 1000;
     }
+
     requestAnimationFrame( this.renderLoop.bind( this ) );
   }
 
