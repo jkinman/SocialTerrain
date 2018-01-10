@@ -2,7 +2,10 @@
 
 import React from 'react';
 import * as THREE from 'three'
+// STATS FPS counter
+import Stats from '../../externals/three.js/examples/js/libs/stats.min.js';
 let TWEEN = require('tween.js');
+
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/loaders/MTLLoader.js");
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/loaders/OBJLoader.js");
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/postprocessing/EffectComposer.js");
@@ -46,10 +49,15 @@ let depthScale = 1.0;
 
 class BaseSceneComponent extends React.Component {
 
-  constructor(props, context) {
+  constructor(props, context, settings) {
     super(props, context);
     this.postprocessing = false;
     this.baseClock = new THREE.Clock();
+    this.settings = settings ? this.settings = settings :
+    {
+      showStats: false,
+      datgui: false
+    };
     // this.datgui = props.datgui.addFolder( 'base scene' );
 
   }
@@ -135,6 +143,14 @@ class BaseSceneComponent extends React.Component {
     //   });
     // }
 
+    // FPS counter
+    if( this.settings.showStats){
+      this.stats = new Stats();
+      document
+      .getElementById("proceduralLandscape-component")
+      .appendChild( this.stats.dom );
+    }
+    
     requestAnimationFrame( this.renderLoop.bind( this ));
 
   }
@@ -144,6 +160,7 @@ class BaseSceneComponent extends React.Component {
     let delta = this.baseClock.getDelta();
 
     TWEEN.update();
+    if( this.stats ) this.stats.update();
 
     renderer.render( shaderScene, textureCamera, this.shaderRenderer );
     if( this.postprocessing ){
@@ -319,12 +336,6 @@ class BaseSceneComponent extends React.Component {
   }
 }
 
-BaseSceneComponent.displayName = 'Shared3dBaseSceneComponent';
+BaseSceneComponent.showStats = false;
 
 export default BaseSceneComponent;
-
-// let event = {
-// coordinates: [23.498582, -109.987843] //cabo
-// coordinates: [-54.557950,-69.733685] // bottom of south america
-//   coordinates: [49.282729,-123.120738]// vancouer
-// };

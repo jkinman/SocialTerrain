@@ -3,8 +3,8 @@
 // https://github.com/mrdoob/three.js/blob/master/examples/webgl_terrain_dynamic.html
 
 import * as THREE from "three";
+import { Object3D } from "three";
 import React from "react";
-// import TCL from 'three-collada-loader';
 import BaseSceneComponent from "./BaseSceneComponent";
 import "./ProceduralLandscape.scss";
 import SimplexNoise from "imports-loader?THREE=three!../../externals/threex/SimplexNoise.js";
@@ -13,14 +13,17 @@ import config from "config";
 import openSocket from "socket.io-client";
 import BeaconPlanar from "./BeaconPlanar";
 import TreeObj from '../../static/3dAssets/LowTree/Tree low.obj';
-import { Object3D } from "three";
 // import TreeMaterialFile from '../../static/3dAssets/LowTree/Tree low.mtl';
+
+import NoiseGroundTreadmill from "./NoiseGroundTreadmill/NoiseGroundTreadmill";
 
 let TWEEN = require("tween.js");
 
 let deviceOrientation;
 let screenOrientation = 0;
 
+// TODO make a channel to kick off other remotes
+// const socket = openSocket(`${config.serverUrl}/client`);
 const socket = openSocket(config.serverUrl);
 socket.on("orientation", orientation => {
   deviceOrientation = orientation;
@@ -49,12 +52,14 @@ const FOG_COLOUR = 0x000000;
 
 class ProceduralLandscapeComponent extends BaseSceneComponent {
   constructor(props, context) {
-    super(props, context);
+    super(props, context, {showStats: true});
     this.Childclock = new THREE.Clock();
+    this.loader = new THREE.OBJLoader();
     window.addEventListener("resize", this.resize.bind(this), false);
     if (this.datgui) {
       this.datgui = this.props.datgui.addFolder("landscape");
     } 
+    
   }
 
   renderLoop() {
@@ -85,6 +90,13 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
       .getElementById("proceduralLandscape-component")
       .appendChild(this.renderer.domElement);
     this.buildScene();
+    // this.createTHREEXTerrain();
+    this.terrainTreadmill = new NoiseGroundTreadmill(this.camera, this.scene, this.renderer);
+    this.terrainTreadmill.init();
+    this.terrainTreadmill.sceneConfig();
+    // this.sceneObectInit();
+    // this.addLightsAndFog();
+
 
     this.controls = new THREE.FlyControls( this.cameraPivot );
     this.controls.movementSpeed = 2;
@@ -234,41 +246,7 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     return treeCopy;
   }
 
-  buildScene() {
-    super.buildScene();
-    this.trees = new THREE.Object3D();
-
-    // FOG IS KEY TO SELLING THE INFINATE TERRAIN ILLUSION
-    this.scene.fog = new THREE.Fog( FOG_COLOUR, 5, 80);
-
-    this.worldgroup = new THREE.Object3D();
-    this.scene.add(this.worldgroup);
-
-    this.globalEvents = new THREE.Object3D();
-    this.worldgroup.add(this.globalEvents);
-    
-    // if (this.datgui) {
-    //   this.datgui.add(this.camera.position, "x", -200, 200);
-    //   this.datgui.add(this.camera.position, "y", -200, 200);
-    //   this.datgui.add(this.camera.position, "z", -200, 200);
-    //   this.datgui.add(this.camera, "fov", 1, 100).onFinishChange(val => {
-    //     this.resize();
-    //   });
-    // }
-
-    this.ambientLight = new THREE.AmbientLight(
-      new THREE.Color("rgb(255, 255, 255)"),
-      0.1
-    );
-    this.scene.add(this.ambientLight);
-
-    var light = new THREE.DirectionalLight("white", 5);
-    light.position.set(0.5, 0.0, 2);
-    this.scene.add(light);
-    var light = new THREE.DirectionalLight("white", 0.75 * 2);
-    light.position.set(-0.5, -0.5, -2);
-    this.scene.add(light);
-
+  createTHREEXTerrain() {
     this.heightMap = THREEx.Terrain.allocateHeightMap(512, 512);
     THREEx.Terrain.simplexHeightMap(this.heightMap);
     let geometry = THREEx.Terrain.heightMapToPlaneGeometry(this.heightMap);
@@ -298,7 +276,54 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.groundMesh = mesh;
     
     var lastTimeMsec = null;
+
+  }
+
+  addLightsAndFog() {
+    // FOG IS KEY TO SELLING THE INFINATE TERRAIN ILLUSION
+    this.scene.fog = new THREE.Fog( FOG_COLOUR, 5, 80);
+
+    this.ambientLight = new THREE.AmbientLight(
+      new THREE.Color("rgb(255, 255, 255)"),
+      0.1
+    );
+    this.scene.add(this.ambientLight);
+
+    var light = new THREE.DirectionalLight("white", 5);
+    light.position.set(0.5, 0.0, 2);
+    this.scene.add(light);
+    var light = new THREE.DirectionalLight("white", 0.75 * 2);
+    light.position.set(-0.5, -0.5, -2);
+    this.scene.add(light);
+
+  }
+
+  buildScene() {
+    // CALL BASE SCENE
+    super.buildScene();
+
+    this.trees = new THREE.Object3D();
+    this.worldgroup = new THREE.Object3D();
+    this.scene.add(this.worldgroup);
+
+    this.globalEvents = new THREE.Object3D();
+    this.worldgroup.add(this.globalEvents);
     
+    // if (this.datgui) {
+    //   this.datgui.add(this.camera.position, "x", -200, 200);
+    //   this.datgui.add(this.camera.position, "y", -200, 200);
+    //   this.datgui.add(this.camera.position, "z", -200, 200);
+    //   this.datgui.add(this.camera, "fov", 1, 100).onFinishChange(val => {
+    //     this.resize();
+    //   });
+    // }
+    
+
+    this.loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
+
+  }
+
+  sceneObectInit() {
     this.gimble = new THREE.Mesh(
       new THREE.BoxGeometry( 4, 8, 1 ), 
       // new THREE.IcosahedronGeometry(2, 0), 
@@ -326,11 +351,8 @@ class ProceduralLandscapeComponent extends BaseSceneComponent {
     this.camera.position.set(0,0,0);
     this.camera.lookAt(0,0,0)
     this.gimble.lookAt(this.camera.position)
-
-    let loader = new THREE.OBJLoader();
-    loader.load( TreeObj, this.handleTrees.bind(this), null, (err) => console.log(err), null, true );
-
   }
+
 
   render() {
     return (
