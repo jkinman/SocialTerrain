@@ -1,6 +1,10 @@
 import * as THREE from "three";
-import SpriteGradient from '../../static/3dAssets/textures/gradient.png';
-import SpritePantone975c from '../../static/3dAssets/textures/pantone-975c.png';
+// import SpriteGradient from '../../static/3dAssets/textures/gradient.png';
+import SpritePantone1 from '../../static/3dAssets/textures/p75c.png';
+import SpritePantone2 from '../../static/3dAssets/textures/p106c.png';
+import SpritePantone3 from '../../static/3dAssets/textures/p624c.png';
+import SpritePantone4 from '../../static/3dAssets/textures/p687c.png';
+
 THREE.ImageUtils.crossOrigin = true;
 
 class GalaxyGenerator {
@@ -73,13 +77,16 @@ class GalaxyGenerator {
   }
 
    ParticleMaterial(c, s, o) {
+     let maps = [SpritePantone1, SpritePantone2, SpritePantone3, SpritePantone4];
+     let spriteMap = maps[Math.floor(Math.random()*maps.length)];
+
     return new THREE.PointsMaterial({
       color: c,
       size: s,
       transparent: true,
       opacity: o,
       // map: THREE.ImageUtils.loadTexture(SpriteGradient
-        map: THREE.ImageUtils.loadTexture(SpritePantone975c)
+        map: THREE.ImageUtils.loadTexture(spriteMap)
     });
   }
 

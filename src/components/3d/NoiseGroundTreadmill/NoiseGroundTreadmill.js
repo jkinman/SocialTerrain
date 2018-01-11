@@ -261,18 +261,18 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
 
         this.lightDir = -1.0;
         let sunAnim = new TWEEN.Tween(0)
-            .to( 2, 60 * 1000 )
+            .to( 2, 80 * 1000 )
             .repeat(2000)
             .yoyo( true )
             .onUpdate((percent) => this.lightDir = 1 - (2 * percent))
             .start();
 
         this.galaxyGenerator = new GalaxyGenerator();
-        this.theGalaxy = this.galaxyGenerator.generateUniverse(50);
+        this.theGalaxy = this.galaxyGenerator.generateUniverse(30);
         this.scene.add( this.theGalaxy );
         this.theGalaxy.position.set( 0, 1200, 0 );
         this.theGalaxy.scale.set( 1, 1, 1 );
-        console.log( this.scene)
+
     }
 
     init() {
@@ -419,16 +419,14 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
     }
     
     remoteEventHandler( data ) {
-
-        let position = new THREE.Vector3( 
-            3500 + this.getRandomInt(1000), 
-            -200 + this.getRandomInt(1000),  
-            this.getRandomInt(2000) 
-        )
-
-        
         let newObj;
-        newObj = this.cloneLoadedOBJ( this.obj3dTree.clone(), Math.random() * 10 )
+        newObj = this.cloneLoadedOBJ( this.obj3dTree.clone(), (Math.random() * 8) + 3 )
+        let position = new THREE.Vector3( 
+            3500 + this.getRandomInt(2000), 
+            LAND_HEIGHT + newObj.height / 3,
+            -200 + this.getRandomInt(2000),  
+            // this.getRandomInt(2000) 
+        )
         newObj.position.set(position.x, position.y, position.z)
         this.trees.add(newObj)
       }

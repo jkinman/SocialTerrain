@@ -205,7 +205,6 @@ class Beacon extends THREE.Object3D {
     
       let profileImage = new Image();
       profileImage.crossOrigin = "Anonymous";
-      profileImage.onerror = () => profileImage.src = BuildLogo;
       profileImage.onload = () => {
         context.drawImage(
           profileImage,
@@ -215,6 +214,7 @@ class Beacon extends THREE.Object3D {
           TWITTER_PROFILE_HEIGHT
         );
       };
+      profileImage.onerror = () => profileImage.src = BuildLogo;
       profileImage.src = message.imageUrl || BuildLogo;
 
     
