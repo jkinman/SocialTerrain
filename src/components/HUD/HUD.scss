@@ -1,0 +1,18 @@
+.HUD-component {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    font-size: 50px;
+    // z-index: 9999;
+    top: 0px;
+    bottom: 0px;
+    color: white;
+    background-color: rgba(0,0,0,0);
+    font-family: 'Oswald', sans-serif;
+    h1 {
+        text-align: center;
+        position: fixed;
+        top: 15vh;
+        width: 100vw;
+    }
+}

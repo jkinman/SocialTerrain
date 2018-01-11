@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import SpriteGradient from '../../static/3dAssets/textures/gradient.png';
+import SpritePantone975c from '../../static/3dAssets/textures/pantone-975c.png';
 THREE.ImageUtils.crossOrigin = true;
 
 class GalaxyGenerator {
@@ -77,8 +78,8 @@ class GalaxyGenerator {
       size: s,
       transparent: true,
       opacity: o,
-      map: THREE.ImageUtils.loadTexture(SpriteGradient
-      )
+      // map: THREE.ImageUtils.loadTexture(SpriteGradient
+        map: THREE.ImageUtils.loadTexture(SpritePantone975c)
     });
   }
 

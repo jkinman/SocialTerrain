@@ -165,7 +165,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         this.sceneObjectInit();
         // this.cameraOrientationLinkingSetup();
         this.renderLoop();
-        this.startPostProcessing();
+        // this.startPostProcessing();
         this.checkMessageQueue();
     }
 
@@ -212,7 +212,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
           },
           position,
           this.shaderRenderer.texture,
-          20000,
+          50000,
         );
         
         this.globalEvents.add(beacon);
@@ -268,7 +268,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
             .start();
 
         this.galaxyGenerator = new GalaxyGenerator();
-        this.theGalaxy = this.galaxyGenerator.generateUniverse(5);
+        this.theGalaxy = this.galaxyGenerator.generateUniverse(50);
         this.scene.add( this.theGalaxy );
         this.theGalaxy.position.set( 0, 1200, 0 );
         this.theGalaxy.scale.set( 1, 1, 1 );
@@ -335,7 +335,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         uniformsTerrain = THREE.UniformsUtils.clone( terrainShader.uniforms );
 
         uniformsTerrain[ 'tNormal' ].value = normalMap.texture;
-        uniformsTerrain[ 'uNormalScale' ].value = 3.5;
+        uniformsTerrain[ 'uNormalScale' ].value = 4.5;
 
         uniformsTerrain[ 'tDisplacement' ].value = heightMap.texture;
 
@@ -351,7 +351,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         uniformsTerrain[ 'diffuse' ].value.setHex( 0xffffff );
         uniformsTerrain[ 'specular' ].value.setHex( 0xffffff );
 
-        uniformsTerrain[ 'shininess' ].value = 30;
+        uniformsTerrain[ 'shininess' ].value = 50;
 
         uniformsTerrain[ 'uDisplacementScale' ].value = 375;
 

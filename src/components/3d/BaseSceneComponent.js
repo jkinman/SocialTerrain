@@ -152,7 +152,7 @@ class BaseSceneComponent extends React.Component {
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
-
+    renderer.shadowMap.enabled = true;
     // add renderer to DOM
     document
       .getElementById(this.settings.elementId)

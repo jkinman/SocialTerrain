@@ -4,6 +4,7 @@ import React, { Component, PropTypes } from "react";
 import config from "config";
 import ProceduralScene from "../components/Scene";
 import TwitterStream from "../sources/stream";
+import HUD from '../components/HUD/HUD'
 
 class sceneContainer extends Component {
   componentDidMount() {
@@ -13,7 +14,12 @@ class sceneContainer extends Component {
 
   render() {
     const { actions, tweets } = this.props;
-    return <ProceduralScene tweets={tweets} actions={actions}/>;
+    return (
+      <div>
+        <HUD tweets={tweets} />
+        <ProceduralScene tweets={tweets} actions={actions}/>
+      </div>
+  );
   }
 }
 
