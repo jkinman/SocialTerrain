@@ -17,7 +17,7 @@ class Scene extends React.Component {
           ref="3dScene"
           terrainColour={"white"}
           meshTerrain={true}
-          fog={false}
+          fog={true}
           tweets={tweets}
         />
       </div>

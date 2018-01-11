@@ -150,6 +150,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
             this.cameraRotate(deviceOrientation);
         }
 
+        if( this.galaxyGenerator ) this.galaxyGenerator.renderLoop();
         //  align flash light with camera
         // var vec = new THREE.Vector3( -4, -2, -10 );
         // vec.applyQuaternion( this.camera.quaternion );
@@ -164,7 +165,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         this.sceneObjectInit();
         // this.cameraOrientationLinkingSetup();
         this.renderLoop();
-        
+        this.startPostProcessing();
         this.checkMessageQueue();
     }
 
@@ -267,7 +268,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
             .start();
 
         this.galaxyGenerator = new GalaxyGenerator();
-        this.theGalaxy = this.galaxyGenerator.generateUniverse(15);
+        this.theGalaxy = this.galaxyGenerator.generateUniverse(5);
         this.scene.add( this.theGalaxy );
         this.theGalaxy.position.set( 0, 1200, 0 );
         this.theGalaxy.scale.set( 1, 1, 1 );
