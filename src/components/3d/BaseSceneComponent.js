@@ -2,8 +2,8 @@
 
 import React from 'react';
 import * as THREE from 'three';
-// STATS FPS counter
 import Stats from '../../externals/three.js/examples/js/libs/stats.min.js';
+
 let TWEEN = require('tween.js');
 
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/loaders/MTLLoader.js");
@@ -27,6 +27,8 @@ require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/shaders/BokehShader.js");
 
 require("imports-loader?THREE=three!../../externals/three.js/examples/js/controls/OrbitControls.js");
+
+THREE.ImageUtils.crossOrigin = true;
 
 const CAMERA_ANIMATION_DELAY = 3000;
 const CAMERA_ROTATE_TIME = 3000;

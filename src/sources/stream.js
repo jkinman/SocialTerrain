@@ -11,9 +11,16 @@ class socialStore {
 
   subscribeToTwitter(tweetAction) {
     this.tweetAction = tweetAction;
-    socket.on("twitter", tweet => tweetAction(tweet));
+    socket.on("twitter", (tweet) => {
+      let parsedData = JSON.parse(tweet)
+      if( Array.isArray( parsedData )){
+        parsedData.map((obj) => tweetAction(obj))
+      }
+      else{
+        tweetAction(parsedData);
+      }
+    })
   }
-
 }
 
 export default socialStore;

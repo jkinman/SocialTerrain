@@ -1,5 +1,7 @@
 import React from 'react';
 import * as THREE from 'three';
+import GalaxyGenerator from '../GalaxyGenerator';
+let TWEEN = require("tween.js");
 import BaseSceneComponent from "../BaseSceneComponent";
 import vertexShader from 'raw-loader!./shaders/vertexShader.txt';
 import fragmentShaderNoise from 'raw-loader!./shaders/fragmentShaderNoise.txt';
@@ -47,7 +49,7 @@ let terrain = {};
 let textureCounter = 0;
 
 let animDelta = 0, animDeltaDir = -1;
-let lightVal = 0, lightDir = -1;
+let lightVal = 0;
 
 let treadmillClock = new THREE.Clock();
 
@@ -88,6 +90,10 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         };
         super(props, context, settings);
         this.updateNoise = true;
+        this.tweetBackup = [];
+        this.tweets = [];
+        this.lightDir = -1;
+
         socket.on("remoteMessage", data => {
             this.remoteEventHandler(data)
         });
@@ -97,6 +103,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
     renderLoop() {
         super.renderLoop();
         let delta = treadmillClock.getDelta();
+        TWEEN.update();
         this.globalEvents.traverse((obj) => {
             if( obj.name == 'beacon' || obj.name == 'movable'){
                 obj.position.x -= 2 + Math.abs(obj.seed || 1);
@@ -117,7 +124,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         if ( terrain.visible ) {
             let time = Date.now() * 0.001;
             let fLow = 0.1, fHigh = 0.8;
-            lightVal = THREE.Math.clamp( lightVal + 0.5 * delta * lightDir, fLow, fHigh );
+            lightVal = THREE.Math.clamp( lightVal + 0.5 * delta * this.lightDir, fLow, fHigh );
 
             let valNorm = ( lightVal - fLow ) / ( fHigh - fLow );
             this.scene.background.setHSL( HUE, SATURATION, lightVal );
@@ -157,11 +164,27 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         this.sceneObjectInit();
         // this.cameraOrientationLinkingSetup();
         this.renderLoop();
+        
+        this.checkMessageQueue();
+    }
+
+    checkMessageQueue() {
+        if( this.tweetBackup.length && !this.tweets.length ){
+            this.tweets = this.tweetBackup.splice(0, this.tweetBackup.length);
+        }
+
+        console.log(`checkMessageQueue: ${this.tweets.length} / ${this.tweetBackup.length}`)
+        if( Array.isArray(this.tweets) && this.tweets.length ){
+            let tweet = this.tweets.splice( 0, 1 );
+            this.tweetBackup.push( tweet[0] );
+            this.showGlobalEvent(tweet[0]);
+        }
+        
+        setTimeout( this.checkMessageQueue.bind(this), 3000 + Math.abs(this.getRandomInt(3000)));
     }
 
     componentWillReceiveProps(nextProps) {
-        // TODO fix this
-        this.showGlobalEvent(nextProps.tweets[nextProps.tweets.length - 1]);
+        this.tweets = nextProps.tweets.sort((a,b) => a.created_at > b.created_at);
       }
     
       getRandomInt(variance) {
@@ -180,9 +203,9 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
           {...event, 
             impact: 80,
             shockwave: true, 
-            title: event.handle, 
+            title: event.user.screen_name, 
             subtitle: event.text, 
-            imageUrl: event.profile,
+            imageUrl: event.user.profile_image_url,
             backgroundUrl: event.user.profile_background_image_url,
             likes: event.entities.favorite_count + event.entities.retweet_count,
           },
@@ -234,6 +257,21 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         // this.flashLight.shadow.camera.far = 4000;
         // this.flashLight.shadow.camera.fov = 30;
         // this.scene.add( this.flashLight );
+
+        this.lightDir = -1.0;
+        let sunAnim = new TWEEN.Tween(0)
+            .to( 2, 60 * 1000 )
+            .repeat(2000)
+            .yoyo( true )
+            .onUpdate((percent) => this.lightDir = 1 - (2 * percent))
+            .start();
+
+        this.galaxyGenerator = new GalaxyGenerator();
+        this.theGalaxy = this.galaxyGenerator.generateUniverse(15);
+        this.scene.add( this.theGalaxy );
+        this.theGalaxy.position.set( 0, 1200, 0 );
+        this.theGalaxy.scale.set( 1, 1, 1 );
+        console.log( this.scene)
     }
 
     init() {
@@ -468,7 +506,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
     
     onKeyDown ( event ) {
         switch( event.keyCode ) {
-            case 78: /*N*/  lightDir *= -1; break;
+            case 78: /*N*/  this.lightDir *= -1; break;
             case 77: /*M*/  animDeltaDir *= -1; break;
             case 32: this.remoteEventHandler();
         }
