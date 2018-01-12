@@ -10,9 +10,37 @@ import openSocket from "socket.io-client";
 import BeaconPlanar from "../BeaconPlanar";
 import TreeObj from '../../../static/3dAssets/LowTree/Tree low.obj';
 
-import GrassLight from '../../../static/3dAssets/textures/terrain/grasslight-big.jpg';
-import GrassLightNM from '../../../static/3dAssets/textures/terrain/grasslight-big-nm.jpg';
-import BackgroundDetailed from '../../../static/3dAssets/textures/terrain/backgrounddetailed6.jpg';
+// import GrassLight from '../../../static/3dAssets/textures/terrain/grasslight-big.jpg';
+// import GrassLightNM from '../../../static/3dAssets/textures/terrain/grasslight-big-nm.jpg';
+// import BackgroundDetailed from '../../../static/3dAssets/textures/terrain/backgrounddetailed6.jpg';
+
+// import GroundColour from '../../../static/3dAssets/textures/Avocado_skin_SD/Avocado_skin_COLOR.jpg';
+// import GroundNormal from '../../../static/3dAssets/textures/Avocado_skin_SD/Avocado_skin_NORM.jpg';
+// import GroundSpec from '../../../static/3dAssets/textures/Avocado_skin_SD/Avocado_skin_SPEC.jpg';
+
+import GroundColour from '../../../static/3dAssets/textures/Striped Fabric 001/Striped_Fabric_001_COLOR.jpg';
+import GroundNormal from '../../../static/3dAssets/textures/Striped Fabric 001/Striped_Fabric_001_NRM.jpg';
+import GroundSpec from '../../../static/3dAssets/textures/Striped Fabric 001/Striped_Fabric_001_SPEC.jpg';
+
+// import GroundColour from '../../../static/3dAssets/textures/Incrusted_Gems_001_SD/Incrusted_Gems_001_COLOR.jpg';
+// import GroundNormal from '../../../static/3dAssets/textures/Incrusted_Gems_001_SD/Incrusted_Gems_001_NORM.jpg';
+// import GroundSpec from '../../../static/3dAssets/textures/Incrusted_Gems_001_SD/Incrusted_Gems_001_SPEC.jpg';
+
+// import GroundColour from '../../../static/3dAssets/textures/Metal_Weave_002_SD/Metal_Weave_002_COLOR.jpg';
+// import GroundNormal from '../../../static/3dAssets/textures/Metal_Weave_002_SD/Metal_Weave_002_NORM.jpg';
+// import GroundSpec from '../../../static/3dAssets/textures/Metal_Weave_002_SD/Metal_Weave_002_ROUGH.jpg';
+
+// import GroundColour from '../../../static/3dAssets/textures/Abstract_007_SD/Abstract_007_COLOR.jpg';
+// import GroundNormal from '../../../static/3dAssets/textures/Abstract_007_SD/Abstract_007_NORM.jpg';
+// import GroundSpec from '../../../static/3dAssets/textures/Abstract_007_SD/Abstract_007_ROUGH.jpg';
+
+// import GroundColour from '../../../static/3dAssets/textures/Wood_plancks_005_SD/Wood_plancks_005_4K_COLOR.jpg';
+// import GroundNormal from '../../../static/3dAssets/textures/Wood_plancks_005_SD/Wood_plancks_005_4K_NRM.jpg';
+// import GroundSpec from '../../../static/3dAssets/textures/Wood_plancks_005_SD/Wood_plancks_005_4K_SPEC.jpg';
+
+// import GroundColour from '../../../static/3dAssets/textures';
+// import GroundNormal from '../../../static/3dAssets/textures';
+// import GroundSpec from '../../../static/3dAssets/textures';
 
 require("imports-loader?THREE=three!../../../externals/three.js/examples/js/ShaderTerrain.js");
 require("imports-loader?THREE=three!../../../externals/three.js/examples/js/shaders/NormalMapShader.js");
@@ -22,6 +50,7 @@ require("imports-loader?THREE=three!../../../externals/three.js/examples/js/cont
 let SCREEN_WIDTH = window.innerWidth;
 let SCREEN_HEIGHT = window.innerHeight;
 const LAND_HEIGHT = -700;
+const TEXTURE_SIZE_FACTOR = 4;
 
 const HUE = 0.5;
 const SATURATION = 0.2;
@@ -139,7 +168,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
                 animDelta = THREE.Math.clamp( animDelta + 0.00075 * animDeltaDir, 0, 0.05 );
                 uniformsNoise[ 'time' ].value += delta * animDelta;
                 uniformsNoise[ 'offset' ].value.x += delta * 0.05;
-                uniformsTerrain[ 'uOffset' ].value.x = 4 * uniformsNoise[ 'offset' ].value.x;
+                uniformsTerrain[ 'uOffset' ].value.x = TEXTURE_SIZE_FACTOR * 4 * uniformsNoise[ 'offset' ].value.x;
                 quadTarget.material = mlib[ 'heightmap' ];
                 this.renderer.render( sceneRenderTarget, cameraOrtho, heightMap, true );
                 quadTarget.material = mlib[ 'normal' ];
@@ -268,7 +297,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
             .start();
 
         this.galaxyGenerator = new GalaxyGenerator();
-        this.theGalaxy = this.galaxyGenerator.generateUniverse(30);
+        this.theGalaxy = this.galaxyGenerator.generateUniverse(5);
         this.scene.add( this.theGalaxy );
         this.theGalaxy.position.set( 0, 1200, 0 );
         this.theGalaxy.scale.set( 1, 1, 1 );
@@ -316,13 +345,19 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         );
         let textureLoader = new THREE.TextureLoader( loadingManager );
 
-        let specularMap = new THREE.WebGLRenderTarget( 2048, 2048, pars );
+        const TEXTURE_SIZE_GROUND = 2048;
+        let specularMap = new THREE.WebGLRenderTarget( TEXTURE_SIZE_GROUND, TEXTURE_SIZE_GROUND, pars );
         specularMap.texture.generateMipmaps = false;    
         
-        let diffuseTexture1 = textureLoader.load( GrassLight );
-        let diffuseTexture2 = textureLoader.load( BackgroundDetailed );
-        let detailTexture = textureLoader.load( GrassLightNM );
+        // let diffuseTexture1 = textureLoader.load( GrassLight );
+        // let diffuseTexture2 = textureLoader.load( BackgroundDetailed );
+        // let detailTexture = textureLoader.load( GrassLightNM );
 
+        let diffuseTexture1 = textureLoader.load( GroundColour );
+        let diffuseTexture2 = textureLoader.load( GroundSpec );
+        let detailTexture = textureLoader.load( GroundNormal );
+        let specularTexture = textureLoader.load( GroundSpec );
+        
         diffuseTexture1.wrapS = diffuseTexture1.wrapT = THREE.RepeatWrapping;
         diffuseTexture2.wrapS = diffuseTexture2.wrapT = THREE.RepeatWrapping;
         detailTexture.wrapS = detailTexture.wrapT = THREE.RepeatWrapping;
@@ -331,17 +366,21 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         // TERRAIN SHADER
 
         let terrainShader = THREE.ShaderTerrain[ "terrain" ];
+        terrainShader.repeat = TEXTURE_SIZE_FACTOR;
 
         uniformsTerrain = THREE.UniformsUtils.clone( terrainShader.uniforms );
 
+        console.log( uniformsTerrain)
         uniformsTerrain[ 'tNormal' ].value = normalMap.texture;
-        uniformsTerrain[ 'uNormalScale' ].value = 4.5;
+        uniformsTerrain[ 'uNormalScale' ].value = 3.5;
 
         uniformsTerrain[ 'tDisplacement' ].value = heightMap.texture;
+        // uniformsTerrain[ 'tDisplacement' ].value = displacmentTexture;
 
         uniformsTerrain[ 'tDiffuse1' ].value = diffuseTexture1;
         uniformsTerrain[ 'tDiffuse2' ].value = diffuseTexture2;
-        uniformsTerrain[ 'tSpecular' ].value = specularMap.texture;
+        // uniformsTerrain[ 'tSpecular' ].value = specularMap.texture;
+        uniformsTerrain[ 'tSpecular' ].value = specularTexture;
         uniformsTerrain[ 'tDetail' ].value = detailTexture;
 
         uniformsTerrain[ 'enableDiffuse1' ].value = true;
@@ -351,11 +390,10 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         uniformsTerrain[ 'diffuse' ].value.setHex( 0xffffff );
         uniformsTerrain[ 'specular' ].value.setHex( 0xffffff );
 
-        uniformsTerrain[ 'shininess' ].value = 50;
+        uniformsTerrain[ 'shininess' ].value = 35;
 
         uniformsTerrain[ 'uDisplacementScale' ].value = 375;
-
-        uniformsTerrain[ 'uRepeatOverlay' ].value.set( 6, 6 );
+        uniformsTerrain[ 'uRepeatOverlay' ].value.set( 6 * TEXTURE_SIZE_FACTOR, 6 * TEXTURE_SIZE_FACTOR );
 
 
         let params = [
@@ -415,10 +453,17 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         this.objLoader = new THREE.OBJLoader(loadingManager);        
         this.objLoader.load( TreeObj, this.handleTree.bind(this), null, (err) => console.log(err), null, true );
         document.addEventListener( 'keydown', this.onKeyDown.bind(this), false );
-
+        this.addTreeLoop()
     }
     
+
+    addTreeLoop() {
+        this.remoteEventHandler();
+        setTimeout( () => this.addTreeLoop(), (Math.random() + 0.3) * 5000 );
+    }
+
     remoteEventHandler( data ) {
+        if(!this.obj3dTree) return;
         let newObj;
         newObj = this.cloneLoadedOBJ( this.obj3dTree.clone(), (Math.random() * 8) + 3 )
         let position = new THREE.Vector3( 

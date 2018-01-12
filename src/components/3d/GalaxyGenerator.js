@@ -67,7 +67,7 @@ class GalaxyGenerator {
       var particleCount = Math.floor(Math.random() * (1000 - 250 + 1)) + 250;
       var particle = {
         color: c,
-        opacity: o,
+        opacity: 1,//o,
         size: s,
         number: particleCount
       }
@@ -81,7 +81,7 @@ class GalaxyGenerator {
      let spriteMap = maps[Math.floor(Math.random()*maps.length)];
 
     return new THREE.PointsMaterial({
-      color: c,
+      // color: c,
       size: s,
       transparent: true,
       opacity: o,
