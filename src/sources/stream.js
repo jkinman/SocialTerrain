@@ -1,7 +1,7 @@
 import openSocket from "socket.io-client";
 // const socket = openSocket("http://localhost:3000");
 import config from 'config';
-const socket = openSocket(config.serverUrl);
+const socket = openSocket(`${config.serverUrl}/client`);
 
 class socialStore {
 
@@ -20,6 +20,10 @@ class socialStore {
         tweetAction(parsedData);
       }
     })
+  }
+  
+  get socket() {
+    return socket;
   }
 }
 

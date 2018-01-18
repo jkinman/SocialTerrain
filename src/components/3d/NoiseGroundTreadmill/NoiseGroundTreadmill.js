@@ -14,29 +14,29 @@ import TreeObj from '../../../static/3dAssets/LowTree/Tree low.obj';
 // import GrassLightNM from '../../../static/3dAssets/textures/terrain/grasslight-big-nm.jpg';
 // import BackgroundDetailed from '../../../static/3dAssets/textures/terrain/backgrounddetailed6.jpg';
 
-// import GroundColour from '../../../static/3dAssets/textures/Avocado_skin_SD/Avocado_skin_COLOR.jpg';
-// import GroundNormal from '../../../static/3dAssets/textures/Avocado_skin_SD/Avocado_skin_NORM.jpg';
-// import GroundSpec from '../../../static/3dAssets/textures/Avocado_skin_SD/Avocado_skin_SPEC.jpg';
+// import GroundColour1 from '../../../static/3dAssets/textures/Avocado_skin_SD/Avocado_skin_COLOR.jpg';
+// import GroundNormal1 from '../../../static/3dAssets/textures/Avocado_skin_SD/Avocado_skin_NORM.jpg';
+// import GroundSpec1 from '../../../static/3dAssets/textures/Avocado_skin_SD/Avocado_skin_SPEC.jpg';
 
-import GroundColour from '../../../static/3dAssets/textures/Striped Fabric 001/Striped_Fabric_001_COLOR.jpg';
-import GroundNormal from '../../../static/3dAssets/textures/Striped Fabric 001/Striped_Fabric_001_NRM.jpg';
-import GroundSpec from '../../../static/3dAssets/textures/Striped Fabric 001/Striped_Fabric_001_SPEC.jpg';
+import GroundColour2 from '../../../static/3dAssets/textures/Striped Fabric 001/Striped_Fabric_001_COLOR.jpg';
+import GroundNormal2 from '../../../static/3dAssets/textures/Striped Fabric 001/Striped_Fabric_001_NRM.jpg';
+import GroundSpec2 from '../../../static/3dAssets/textures/Striped Fabric 001/Striped_Fabric_001_SPEC.jpg';
 
-// import GroundColour from '../../../static/3dAssets/textures/Incrusted_Gems_001_SD/Incrusted_Gems_001_COLOR.jpg';
-// import GroundNormal from '../../../static/3dAssets/textures/Incrusted_Gems_001_SD/Incrusted_Gems_001_NORM.jpg';
-// import GroundSpec from '../../../static/3dAssets/textures/Incrusted_Gems_001_SD/Incrusted_Gems_001_SPEC.jpg';
+// import GroundColour3 from '../../../static/3dAssets/textures/Incrusted_Gems_001_SD/Incrusted_Gems_001_COLOR.jpg';
+// import GroundNormal3 from '../../../static/3dAssets/textures/Incrusted_Gems_001_SD/Incrusted_Gems_001_NORM.jpg';
+// import GroundSpec3 from '../../../static/3dAssets/textures/Incrusted_Gems_001_SD/Incrusted_Gems_001_SPEC.jpg';
 
-// import GroundColour from '../../../static/3dAssets/textures/Metal_Weave_002_SD/Metal_Weave_002_COLOR.jpg';
-// import GroundNormal from '../../../static/3dAssets/textures/Metal_Weave_002_SD/Metal_Weave_002_NORM.jpg';
-// import GroundSpec from '../../../static/3dAssets/textures/Metal_Weave_002_SD/Metal_Weave_002_ROUGH.jpg';
+// import GroundColour4 from '../../../static/3dAssets/textures/Metal_Weave_002_SD/Metal_Weave_002_COLOR.jpg';
+// import GroundNormal4 from '../../../static/3dAssets/textures/Metal_Weave_002_SD/Metal_Weave_002_NORM.jpg';
+// import GroundSpec4 from '../../../static/3dAssets/textures/Metal_Weave_002_SD/Metal_Weave_002_ROUGH.jpg';
 
-// import GroundColour from '../../../static/3dAssets/textures/Abstract_007_SD/Abstract_007_COLOR.jpg';
-// import GroundNormal from '../../../static/3dAssets/textures/Abstract_007_SD/Abstract_007_NORM.jpg';
-// import GroundSpec from '../../../static/3dAssets/textures/Abstract_007_SD/Abstract_007_ROUGH.jpg';
+// import GroundColour5 from '../../../static/3dAssets/textures/Abstract_007_SD/Abstract_007_COLOR.jpg';
+// import GroundNormal5 from '../../../static/3dAssets/textures/Abstract_007_SD/Abstract_007_NORM.jpg';
+// import GroundSpec5 from '../../../static/3dAssets/textures/Abstract_007_SD/Abstract_007_ROUGH.jpg';
 
-// import GroundColour from '../../../static/3dAssets/textures/Wood_plancks_005_SD/Wood_plancks_005_4K_COLOR.jpg';
-// import GroundNormal from '../../../static/3dAssets/textures/Wood_plancks_005_SD/Wood_plancks_005_4K_NRM.jpg';
-// import GroundSpec from '../../../static/3dAssets/textures/Wood_plancks_005_SD/Wood_plancks_005_4K_SPEC.jpg';
+// import GroundColour6 from '../../../static/3dAssets/textures/Wood_plancks_005_SD/Wood_plancks_005_4K_COLOR.jpg';
+// import GroundNormal6 from '../../../static/3dAssets/textures/Wood_plancks_005_SD/Wood_plancks_005_4K_NRM.jpg';
+// import GroundSpec6 from '../../../static/3dAssets/textures/Wood_plancks_005_SD/Wood_plancks_005_4K_SPEC.jpg';
 
 // import GroundColour from '../../../static/3dAssets/textures';
 // import GroundNormal from '../../../static/3dAssets/textures';
@@ -85,19 +85,6 @@ let treadmillClock = new THREE.Clock();
 let animateTerrain = false;
 let mlib = {};
 
-// LINK UP SOCKET EVENTS
-// const socket = openSocket('http://localhost:3000/terrainApp');
-const socket = openSocket(config.serverUrl);
-// TODO make a channel to kick off other remotes
-// const socket = openSocket(`${config.serverUrl}/client`);
-socket.on("orientation", orientation => {
-  deviceOrientation = orientation;
-});
-
-socket.on("screenrotation", orientation => {
-  screenOrientation = orientation.direction;
-});
-
 // rotation consts
 const zee = new THREE.Vector3(0, 0, 1);
 const euler = new THREE.Euler();
@@ -105,7 +92,6 @@ const q0 = new THREE.Quaternion();
 const q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
 let deviceOrientation;
 let screenOrientation = 0;
-
 
 class NoiseTerrainTreadmill extends BaseSceneComponent {
 
@@ -123,10 +109,28 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         this.tweets = [];
         this.lightDir = -1;
 
+        this.createSocketConnections( props.socket );
+    }
+
+    createSocketConnections( socket ) {
+        // LINK UP SOCKET EVENTS
+        // const socket = openSocket('http://localhost:3000/client');
+        // const socket = openSocket(config.serverUrl);
+        // TODO make a channel to kick off other remotes
+        // const socket = openSocket(`${config.serverUrl}/client`);
+
         socket.on("remoteMessage", data => {
             this.remoteEventHandler(data)
         });
         
+        socket.on("orientation", orientation => {
+            this.deviceOrientation = orientation;
+        });
+
+        socket.on("screenrotation", orientation => {
+            this.screenOrientation = orientation.direction;
+        });
+
     }
 
     renderLoop() {
@@ -348,15 +352,30 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         const TEXTURE_SIZE_GROUND = 2048;
         let specularMap = new THREE.WebGLRenderTarget( TEXTURE_SIZE_GROUND, TEXTURE_SIZE_GROUND, pars );
         specularMap.texture.generateMipmaps = false;    
-        
-        // let diffuseTexture1 = textureLoader.load( GrassLight );
-        // let diffuseTexture2 = textureLoader.load( BackgroundDetailed );
-        // let detailTexture = textureLoader.load( GrassLightNM );
+        // let texGroupArray = [
+        //     [GroundSpec1, GroundNormal1, GroundColour1],
+        //     [GroundSpec2, GroundNormal2, GroundColour2],
+        //     [GroundSpec3, GroundNormal3, GroundColour3],
+        //     [GroundSpec4, GroundNormal4, GroundColour4],
+        //     [GroundSpec5, GroundNormal5, GroundColour5],
+        //     [GroundSpec6, GroundNormal6, GroundColour6],
+        // ];
 
-        let diffuseTexture1 = textureLoader.load( GroundColour );
-        let diffuseTexture2 = textureLoader.load( GroundSpec );
-        let detailTexture = textureLoader.load( GroundNormal );
-        let specularTexture = textureLoader.load( GroundSpec );
+        // let texGroup = texGroupArray[Math.floor(Math.random()*texGroupArray.length)]
+        let texGroup = [GroundSpec2, GroundNormal2, GroundColour2];
+        // let specArray = [GroundSpec2, GroundSpec3, GroundSpec5];
+        // let localSpec = specArray[Math.floor(Math.random()*specArray.length)]
+
+        // let nmArray = [GroundNormal2, GroundNormal3, GroundNormal5];
+        // let localNm = nmArray[Math.floor(Math.random()*nmArray.length)]
+
+        // let colourArray = [GroundColour2, GroundColour3, GroundColour5];
+        // let localColour = colourArray[Math.floor(Math.random()*colourArray.length)]
+
+        let diffuseTexture1 = textureLoader.load( texGroup[2] );
+        let diffuseTexture2 = textureLoader.load( texGroup[0] );
+        let detailTexture = textureLoader.load( texGroup[1] );
+        let specularTexture = textureLoader.load( texGroup[0] );
         
         diffuseTexture1.wrapS = diffuseTexture1.wrapT = THREE.RepeatWrapping;
         diffuseTexture2.wrapS = diffuseTexture2.wrapT = THREE.RepeatWrapping;
@@ -379,7 +398,6 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
 
         uniformsTerrain[ 'tDiffuse1' ].value = diffuseTexture1;
         uniformsTerrain[ 'tDiffuse2' ].value = diffuseTexture2;
-        // uniformsTerrain[ 'tSpecular' ].value = specularMap.texture;
         uniformsTerrain[ 'tSpecular' ].value = specularTexture;
         uniformsTerrain[ 'tDetail' ].value = detailTexture;
 

@@ -10,7 +10,7 @@ class Scene extends React.Component {
   }
 
   render() {
-    const { tweets } = this.props;
+    const { tweets, socket } = this.props;
     return (
       <div className="">
         <Landscape
@@ -19,6 +19,7 @@ class Scene extends React.Component {
           meshTerrain={true}
           fog={true}
           tweets={tweets}
+          socket={socket}
         />
       </div>
     );
