@@ -2,7 +2,7 @@ import baseConfig from './base';
 
 const config = {
   appEnv: 'dist',
-  serverUrl: 'https://socialterrain.herokuapp.com/',
+  serverUrl: 'https://socialterrain.herokuapp.com',
   
 };
 

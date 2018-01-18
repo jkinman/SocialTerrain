@@ -90,8 +90,6 @@ const zee = new THREE.Vector3(0, 0, 1);
 const euler = new THREE.Euler();
 const q0 = new THREE.Quaternion();
 const q1 = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
-let deviceOrientation;
-let screenOrientation = 0;
 
 class NoiseTerrainTreadmill extends BaseSceneComponent {
 
@@ -108,7 +106,9 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         this.tweetBackup = [];
         this.tweets = [];
         this.lightDir = -1;
-
+        this.deviceOrientation = null;
+        this.screenOrientation = 0;
+        
         this.createSocketConnections( props.socket );
     }
 
@@ -118,9 +118,15 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         // const socket = openSocket(config.serverUrl);
         // TODO make a channel to kick off other remotes
         // const socket = openSocket(`${config.serverUrl}/client`);
+        
 
         socket.on("remoteMessage", data => {
             this.remoteEventHandler(data)
+        });
+
+        socket.on("newConnection", data => {
+            console.log( `new connetion ${data}`);
+            this.newRemoteConnection(data);
         });
         
         socket.on("orientation", orientation => {
@@ -179,8 +185,8 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
                 this.renderer.render( sceneRenderTarget, cameraOrtho, normalMap, true );
             }
         }
-        if (deviceOrientation){
-            this.cameraRotate(deviceOrientation);
+        if (this.deviceOrientation){
+            this.cameraRotate(this.deviceOrientation);
         }
 
         if( this.galaxyGenerator ) this.galaxyGenerator.renderLoop();
@@ -306,6 +312,10 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         this.theGalaxy.position.set( 0, 1200, 0 );
         this.theGalaxy.scale.set( 1, 1, 1 );
 
+    }
+
+    newRemoteConnection(data) {
+        this.camera.position.set( -250, 800, -250 );
     }
 
     init() {
@@ -534,7 +544,7 @@ class NoiseTerrainTreadmill extends BaseSceneComponent {
         // I LUCKED OUT AND EVERYTHING WORKS IF I MULTIPLY BEAT BY -1
         beta = -beta;
     
-        var orient = screenOrientation ? THREE.Math.degToRad(screenOrientation) : 0; // O
+        var orient = this.screenOrientation ? THREE.Math.degToRad(this.screenOrientation) : 0; // O
     
         if(this.gimble) this.setObjectQuaternion(this.gimble.quaternion, alpha, beta, gamma, orient);
         this.setObjectQuaternion(this.camera.quaternion, alpha, beta, gamma, orient);
